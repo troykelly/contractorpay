@@ -414,29 +414,21 @@ class PayCalculator {
       ann.push(
         `<p>Approx. full‑time salary <strong>$${formatMoney(
           data.fteSalary,
-        )}</strong> per year</p>`,
+        )}</strong></p>`,
       );
       if (data.superRate > 0) {
-        ann.push(
-          `<p>Total package about $${formatMoney(data.ftePackage)} per year</p>`,
-        );
+        ann.push(`<p>Total package about $${formatMoney(data.ftePackage)}</p>`);
       }
-      if (data.fteNet && data.perInvoiceNet) {
-        const words = {
-          weekly: "week",
-          fortnightly: "fortnight",
-          monthly: "month",
-          quarterly: "quarter",
-        };
-        const freqWord = words[data.invoiceFreq] || data.invoiceFreq;
-        ann.push(
-          `<p>Take‑home about $${formatMoney(
-            data.fteNet,
-          )} per year (around $${formatMoney(data.perInvoiceNet)} each ${freqWord})</p>`,
-        );
+      ann.push(
+        `<p>PAYG tax about $${formatMoney(
+          data.fteTax,
+        )} (assumes first employer & includes Medicare levy)</p>`,
+      );
+      if (data.fteNet) {
+        ann.push(`<p>Take‑home about $${formatMoney(data.fteNet)}</p>`);
       }
       sections.push(
-        `<section class="explanation-section annual"><h3>📈 Annualised Equivalent</h3>${ann.join(
+        `<section class="explanation-section annual"><h3>📈 Full‑Time Equivalent</h3>${ann.join(
           "",
         )}</section>`,
       );
@@ -580,21 +572,27 @@ class PayCalculator {
     currentRate = baseRate;
     baseWorkingDays = workingDays;
     otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
-    const annualDays = 260;
-    const fteSalary = dailyRate * annualDays;
-    const dateForFy = startDateVal ? new Date(startDateVal) : new Date();
-    const fyStart =
-      dateForFy.getMonth() >= 6
-        ? dateForFy.getFullYear()
-        : dateForFy.getFullYear() - 1;
-    const fy = `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
-    const fteTax = AusTaxBrackets.calculateTax(fteSalary, fy);
-    const fteSuper = fteSalary * superRate;
+    const ftePackage = incomeExGst;
+    const fteSalary = ftePackage / (1 + superRate);
+    const fteSuper = ftePackage - fteSalary;
+    let fteTax = 0;
+    if (startDateVal && endDateVal) {
+      fteTax = AusTaxBrackets.calculateTaxForPeriod(
+        startDateVal,
+        endDateVal,
+        fteSalary,
+      );
+    } else {
+      const dateForFy = startDateVal ? new Date(startDateVal) : new Date();
+      const fyStart =
+        dateForFy.getMonth() >= 6
+          ? dateForFy.getFullYear()
+          : dateForFy.getFullYear() - 1;
+      const fy = `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
+      fteTax = AusTaxBrackets.calculateTax(fteSalary, fy);
+    }
     const fteHecs = fteSalary * hecsRate;
-    const ftePackage = fteSalary + fteSuper;
-    const fteNet = fteSalary - fteTax - fteSuper - fteHecs;
-    const freqMap = { weekly: 52, fortnightly: 26, monthly: 12, quarterly: 4 };
-    const perInvoiceNet = fteNet / (freqMap[invoiceFreqSelect.value] || 52);
+    const fteNet = fteSalary - fteTax - fteHecs;
 
     updateRateChangeUI();
     generateExplanation({
@@ -606,8 +604,8 @@ class PayCalculator {
       netAmount,
       fteSalary,
       ftePackage,
+      fteTax,
       fteNet,
-      perInvoiceNet,
       invoiceFreq: invoiceFreqSelect.value,
       superRate,
       hecsRate,
