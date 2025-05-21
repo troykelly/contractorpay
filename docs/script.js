@@ -103,6 +103,18 @@ class PayCalculator {
     const furloughContainer = document.getElementById('furloughContainer');
     const superInput = document.getElementById('superRate');
     const hecsInput = document.getElementById('hecsRate');
+    const invoiceFreqSelect = document.getElementById('invoiceFreq');
+    const invoiceDayInput = document.getElementById('invoiceDay');
+    const invoiceDayGroup = document.getElementById('invoiceDayGroup');
+    const ledgerModal = document.getElementById('ledgerModal');
+    const ledgerBody = document.getElementById('ledgerBody');
+    const ledgerIncome = document.getElementById('ledgerIncome');
+    const ledgerGst = document.getElementById('ledgerGst');
+    const ledgerIncomeInc = document.getElementById('ledgerIncomeInc');
+    const ledgerTax = document.getElementById('ledgerTax');
+    const ledgerSuper = document.getElementById('ledgerSuper');
+    const ledgerHecs = document.getElementById('ledgerHecs');
+    const ledgerNet = document.getElementById('ledgerNet');
     let prevRateType = rateTypeSelect.value;
 
     const currentRateSpan = document.getElementById('currentRate');
@@ -163,6 +175,10 @@ class PayCalculator {
         rateInput.value = newVal.toFixed(2);
         prevRateType = rateTypeSelect.value;
         calculate();
+    });
+
+    invoiceFreqSelect.addEventListener('change', function() {
+        invoiceDayGroup.style.display = invoiceFreqSelect.value === 'monthly' ? '' : 'none';
     });
 
     function attachAutoCalc(id) {
@@ -301,6 +317,8 @@ class PayCalculator {
             superRate: superInput.value,
             hecsRate: hecsInput.value,
             hoursPerDay: hoursPerDayInput.value,
+            invoiceFreq: invoiceFreqSelect.value,
+            invoiceDay: invoiceDayInput.value,
             furlough: periods
         };
     }
@@ -318,6 +336,9 @@ class PayCalculator {
         superInput.value = data.superRate || 11;
         hecsInput.value = data.hecsRate || 0;
         hoursPerDayInput.value = data.hoursPerDay || 7.2;
+        invoiceFreqSelect.value = data.invoiceFreq || 'weekly';
+        invoiceDayInput.value = data.invoiceDay || 1;
+        invoiceDayGroup.style.display = invoiceFreqSelect.value === 'monthly' ? '' : 'none';
         furloughContainer.querySelectorAll('.furlough-period').forEach(p => p.remove());
         if (Array.isArray(data.furlough)) {
             data.furlough.forEach(per => {
@@ -328,6 +349,88 @@ class PayCalculator {
                 div.querySelector('.furlough-end').value = per.end || '';
             });
         }
+    }
+
+    async function createLedger() {
+        await calculate();
+        const freq = invoiceFreqSelect.value;
+        const invoiceDay = parseInt(invoiceDayInput.value) || 1;
+        const rate = parseFloat(rateInput.value) || 0;
+        const dailyRate = convertRate(rate, rateTypeSelect.value, 'daily');
+        const gstRate = document.getElementById('collectGst').checked ? 0.1 : 0;
+        const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0;
+        const superRate = parseFloat(superInput.value) / 100 || 0;
+        const hecsRate = parseFloat(hecsInput.value) / 100 || 0;
+        const startDateVal = document.getElementById('startDate').value;
+        const endDateVal = document.getElementById('endDate').value;
+        const state = document.getElementById('state').value;
+        if (!startDateVal || !endDateVal || !state) return;
+        const startDate = new Date(startDateVal);
+        const endDate = new Date(endDateVal);
+        const calc = new PayCalculator(dailyRate, gstRate, taxRate, superRate, hecsRate);
+        ledgerBody.innerHTML = '';
+        let totals = { incomeExGst:0, incomeIncGst:0, gstAmount:0, taxAmount:0, superAmount:0, hecsAmount:0, netAmount:0 };
+
+        let currentStart = new Date(startDate);
+        if (freq === 'monthly' || freq === 'quarterly') {
+            currentStart = new Date(startDate.getFullYear(), startDate.getMonth(), invoiceDay);
+            if (currentStart < startDate) {
+                currentStart.setMonth(currentStart.getMonth() + (freq === 'quarterly' ? 3 : 1));
+                currentStart.setDate(invoiceDay);
+            }
+        }
+
+        while (true) {
+            let periodEnd, nextStart;
+            if (freq === 'weekly' || freq === 'fortnightly') {
+                const days = freq === 'weekly' ? 7 : 14;
+                periodEnd = new Date(currentStart);
+                periodEnd.setDate(periodEnd.getDate() + days - 1);
+                if (periodEnd > endDate) break;
+                nextStart = new Date(currentStart);
+                nextStart.setDate(nextStart.getDate() + days);
+            } else {
+                const months = freq === 'quarterly' ? 3 : 1;
+                nextStart = new Date(currentStart);
+                nextStart.setMonth(nextStart.getMonth() + months);
+                nextStart.setDate(invoiceDay);
+                periodEnd = new Date(nextStart);
+                periodEnd.setDate(periodEnd.getDate() - 1);
+                if (periodEnd > endDate) break;
+            }
+
+            const workingDays = await PayCalculator.countWorkingDays(new Date(currentStart), periodEnd, state);
+            const result = calc.calculate(workingDays);
+            totals.incomeExGst += result.incomeExGst;
+            totals.incomeIncGst += result.incomeIncGst;
+            totals.gstAmount += result.gstAmount;
+            totals.taxAmount += result.taxAmount;
+            totals.superAmount += result.superAmount;
+            totals.hecsAmount += result.hecsAmount;
+            totals.netAmount += result.netAmount;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${currentStart.toISOString().slice(0,10)} - ${periodEnd.toISOString().slice(0,10)}</td>`+
+                `<td>${formatMoney(result.incomeExGst)}</td>`+
+                `<td>${formatMoney(result.gstAmount)}</td>`+
+                `<td>${formatMoney(result.incomeIncGst)}</td>`+
+                `<td>${formatMoney(result.taxAmount)}</td>`+
+                `<td>${formatMoney(result.superAmount)}</td>`+
+                `<td>${formatMoney(result.hecsAmount)}</td>`+
+                `<td>${formatMoney(result.netAmount)}</td>`;
+            ledgerBody.appendChild(tr);
+            currentStart = nextStart;
+        }
+
+        ledgerIncome.textContent = formatMoney(totals.incomeExGst);
+        ledgerGst.textContent = formatMoney(totals.gstAmount);
+        ledgerIncomeInc.textContent = formatMoney(totals.incomeIncGst);
+        ledgerTax.textContent = formatMoney(totals.taxAmount);
+        ledgerSuper.textContent = formatMoney(totals.superAmount);
+        ledgerHecs.textContent = formatMoney(totals.hecsAmount);
+        ledgerNet.textContent = formatMoney(totals.netAmount);
+
+        ledgerModal.hidden = false;
     }
 
     async function copyShareLink() {
@@ -359,6 +462,11 @@ class PayCalculator {
     document.getElementById('calculate').addEventListener('click', calculate);
     const copyBtn = document.getElementById('copyLink');
     if (copyBtn) copyBtn.addEventListener('click', copyShareLink);
+    const ledgerBtn = document.getElementById('createLedger');
+    if (ledgerBtn) ledgerBtn.addEventListener('click', createLedger);
+    const closeLedgerBtn = document.getElementById('closeLedger');
+    if (closeLedgerBtn) closeLedgerBtn.addEventListener('click', () => ledgerModal.hidden = true);
+    if (ledgerModal) ledgerModal.addEventListener('click', function(e){ if(e.target === ledgerModal) ledgerModal.hidden = true; });
     if (rateChangeDiv) {
         rateChangeDiv.addEventListener('click', function(e) {
             if (e.target.dataset) {
@@ -370,5 +478,6 @@ class PayCalculator {
             }
         });
     }
+    invoiceFreqSelect.dispatchEvent(new Event('change'));
     calculate();
 })();
