@@ -532,9 +532,18 @@ class PayCalculator {
         const encoded = encodeURIComponent(btoa(JSON.stringify(data)));
         const url = `${location.origin}${location.pathname}?link=${encoded}`;
         const net = document.getElementById('netAmount').textContent || '0';
-        const text = `I've used a contractor income calculator to calculate approximately ${net} should be banked for the period ${data.startDate} to ${data.endDate} @ $${data.rate}/${data.rateType}. ${url}`;
+        const plain = `I've used a contractor income calculator to calculate approximately ${net} should be banked for the period ${data.startDate} to ${data.endDate} @ $${data.rate}/${data.rateType}. ${url}`;
+        const html = `<p>I've used a <strong>contractor income calculator</strong> to calculate approximately <strong>${net}</strong> should be banked for the period <strong>${data.startDate}</strong> to <strong>${data.endDate}</strong> @ <strong>$${data.rate}/${data.rateType}</strong>. <a href="${url}">${url}</a></p>`;
         try {
-            await navigator.clipboard.writeText(text);
+            if (navigator.clipboard && window.ClipboardItem) {
+                const item = new ClipboardItem({
+                    'text/plain': new Blob([plain], {type: 'text/plain'}),
+                    'text/html': new Blob([html], {type: 'text/html'})
+                });
+                await navigator.clipboard.write([item]);
+            } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(html);
+            }
             alert('Share link copied to clipboard');
         } catch (e) {
             console.error('Clipboard copy failed', e);

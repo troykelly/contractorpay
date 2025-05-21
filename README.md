@@ -6,7 +6,7 @@ The application is completely client side and hosted using GitHub Pages from the
 It allows you to input your daily rate, select a date range and state, and it automatically calculates the working days in that period (excluding weekends and public holidays).
 GST is fixed at 10% with an optional **Collect GST** checkbox. Toggle it and adjust approximate tax rates to see how much money you might bank after setting aside tax.
 
-The calculator can generate a share link with your inputs. Click **Copy Share Link** to copy explanatory text and a URL to your clipboard that will prefill the form for anyone who opens it.
+The calculator can generate a share link with your inputs. Click **Copy Share Link** to copy formatted text and a URL to your clipboard that will prefill the form for anyone who opens it. Modern browsers will receive both rich and plain text so you can paste into chat apps or emails with proper formatting.
 
 > **Disclaimer**: This tool provides an approximate estimation only and does not constitute financial advice. Always seek professional financial advice for your specific circumstances.
 
