@@ -107,16 +107,9 @@ class PayCalculator {
     const invoiceDayInput = document.getElementById('invoiceDay');
     const invoiceDayGroup = document.getElementById('invoiceDayGroup');
     const ledgerModal = document.getElementById('ledgerModal');
-    const ledgerBody = document.getElementById('ledgerBody');
-    const ledgerIncome = document.getElementById('ledgerIncome');
-    const ledgerGst = document.getElementById('ledgerGst');
-    const ledgerIncomeInc = document.getElementById('ledgerIncomeInc');
-    const ledgerTax = document.getElementById('ledgerTax');
-    const ledgerSuper = document.getElementById('ledgerSuper');
-    const ledgerHecs = document.getElementById('ledgerHecs');
-    const ledgerNet = document.getElementById('ledgerNet');
     const ledgerAccountsDiv = document.getElementById('ledgerAccounts');
     const closeLedgerFooterBtn = document.getElementById('closeLedgerFooter');
+    const copyLedgerBtn = document.getElementById('copyLedger');
     if (ledgerModal) ledgerModal.hidden = true;
     let prevRateType = rateTypeSelect.value;
 
@@ -371,67 +364,9 @@ class PayCalculator {
         const startDate = new Date(startDateVal);
         const endDate = new Date(endDateVal);
         const calc = new PayCalculator(dailyRate, gstRate, taxRate, superRate, hecsRate);
-        ledgerBody.innerHTML = '';
-        let totals = { incomeExGst:0, incomeIncGst:0, gstAmount:0, taxAmount:0, superAmount:0, hecsAmount:0, netAmount:0 };
+        const totals = calc.calculate(baseWorkingDays);
 
-        let currentStart = new Date(startDate);
-        if (freq === 'monthly' || freq === 'quarterly') {
-            currentStart = new Date(startDate.getFullYear(), startDate.getMonth(), invoiceDay);
-            if (currentStart < startDate) {
-                currentStart.setMonth(currentStart.getMonth() + (freq === 'quarterly' ? 3 : 1));
-                currentStart.setDate(invoiceDay);
-            }
-        }
-
-        while (true) {
-            let periodEnd, nextStart;
-            if (freq === 'weekly' || freq === 'fortnightly') {
-                const days = freq === 'weekly' ? 7 : 14;
-                periodEnd = new Date(currentStart);
-                periodEnd.setDate(periodEnd.getDate() + days - 1);
-                if (periodEnd > endDate) break;
-                nextStart = new Date(currentStart);
-                nextStart.setDate(nextStart.getDate() + days);
-            } else {
-                const months = freq === 'quarterly' ? 3 : 1;
-                nextStart = new Date(currentStart);
-                nextStart.setMonth(nextStart.getMonth() + months);
-                nextStart.setDate(invoiceDay);
-                periodEnd = new Date(nextStart);
-                periodEnd.setDate(periodEnd.getDate() - 1);
-                if (periodEnd > endDate) break;
-            }
-
-            const workingDays = await PayCalculator.countWorkingDays(new Date(currentStart), periodEnd, state);
-            const result = calc.calculate(workingDays);
-            totals.incomeExGst += result.incomeExGst;
-            totals.incomeIncGst += result.incomeIncGst;
-            totals.gstAmount += result.gstAmount;
-            totals.taxAmount += result.taxAmount;
-            totals.superAmount += result.superAmount;
-            totals.hecsAmount += result.hecsAmount;
-            totals.netAmount += result.netAmount;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${currentStart.toISOString().slice(0,10)} - ${periodEnd.toISOString().slice(0,10)}</td>`+
-                `<td>${formatMoney(result.incomeExGst)}</td>`+
-                `<td>${formatMoney(result.gstAmount)}</td>`+
-                `<td>${formatMoney(result.incomeIncGst)}</td>`+
-                `<td>${formatMoney(result.taxAmount)}</td>`+
-                `<td>${formatMoney(result.superAmount)}</td>`+
-                `<td>${formatMoney(result.hecsAmount)}</td>`+
-                `<td>${formatMoney(result.netAmount)}</td>`;
-            ledgerBody.appendChild(tr);
-            currentStart = nextStart;
-        }
-
-        ledgerIncome.textContent = formatMoney(totals.incomeExGst);
-        ledgerGst.textContent = formatMoney(totals.gstAmount);
-        ledgerIncomeInc.textContent = formatMoney(totals.incomeIncGst);
-        ledgerTax.textContent = formatMoney(totals.taxAmount);
-        ledgerSuper.textContent = formatMoney(totals.superAmount);
-        ledgerHecs.textContent = formatMoney(totals.hecsAmount);
-        ledgerNet.textContent = formatMoney(totals.netAmount);
+        let currentStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
         // Build account ledgers
         if (ledgerAccountsDiv) ledgerAccountsDiv.innerHTML = '';
@@ -440,24 +375,16 @@ class PayCalculator {
             'Income (Sales)': [],
             'GST Liability': [],
             'Super Liability': [],
+            'Super Expense': [],
             'HECS Liability': [],
+            'HECS Expense': [],
             'Income Tax Liability': [],
+            'Income Tax Expense': [],
             'Bank Account': []
         };
 
         let superAccrued = 0;
         let hecsAccrued = 0;
-        currentStart = new Date(startDate);
-        if (freq === 'monthly' || freq === 'quarterly') {
-            currentStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-            if (currentStart < startDate) {
-                currentStart.setMonth(currentStart.getMonth() + 1);
-            }
-        }
-
-
-        currentStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-        const periods = [];
         while (currentStart <= endDate) {
             const workingDays = await PayCalculator.countWorkingDays(
                 new Date(currentStart),
@@ -482,6 +409,7 @@ class PayCalculator {
             accounts['Bank Account'].push({date: gstPayDate, desc: 'GST Payment', debit: 0, credit: result.gstAmount});
 
             accounts['Super Liability'].push({date: accrueDate, desc: 'Super Liability Accrued', debit: 0, credit: result.superAmount});
+            accounts['Super Expense'].push({date: accrueDate, desc: 'Superannuation Expense', debit: result.superAmount, credit: 0});
             superAccrued += result.superAmount;
             if ((currentStart.getMonth() + 1) % 3 === 0) {
                 accounts['Super Liability'].push({date: accrueDate, desc: 'Transfer to Super Fund', debit: superAccrued, credit: 0});
@@ -490,9 +418,8 @@ class PayCalculator {
             }
 
             accounts['HECS Liability'].push({date: accrueDate, desc: 'HECS Liability Accrued', debit: 0, credit: result.hecsAmount});
+            accounts['HECS Expense'].push({date: accrueDate, desc: 'HECS Expense', debit: result.hecsAmount, credit: 0});
             hecsAccrued += result.hecsAmount;
-
-            periods.push({start: new Date(currentStart), result});
 
             currentStart.setMonth(currentStart.getMonth() + 1);
         }
@@ -502,6 +429,7 @@ class PayCalculator {
         accounts['Bank Account'].push({date: yearEnd, desc: 'HECS Payment', debit: 0, credit: hecsAccrued});
 
         accounts['Income Tax Liability'].push({date: yearEnd, desc: 'Income Tax Accrued', debit: 0, credit: totals.taxAmount});
+        accounts['Income Tax Expense'].push({date: yearEnd, desc: 'Income Tax Expense', debit: totals.taxAmount, credit: 0});
         accounts['Income Tax Liability'].push({date: yearEnd, desc: 'Payment of Income Tax to ATO', debit: totals.taxAmount, credit: 0});
         accounts['Bank Account'].push({date: yearEnd, desc: 'Income Tax Payment', debit: 0, credit: totals.taxAmount});
 
@@ -550,6 +478,26 @@ class PayCalculator {
         }
     }
 
+    async function copyLedger() {
+        if (!ledgerAccountsDiv) return;
+        const html = ledgerAccountsDiv.innerHTML;
+        const plain = ledgerAccountsDiv.innerText;
+        try {
+            if (navigator.clipboard && window.ClipboardItem) {
+                const item = new ClipboardItem({
+                    'text/plain': new Blob([plain], {type: 'text/plain'}),
+                    'text/html': new Blob([html], {type: 'text/html'})
+                });
+                await navigator.clipboard.write([item]);
+            } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(html);
+            }
+            alert('Ledger copied to clipboard');
+        } catch (e) {
+            console.error('Clipboard copy failed', e);
+        }
+    }
+
     const params = new URLSearchParams(location.search);
     if (params.has('link')) {
         try {
@@ -566,6 +514,7 @@ class PayCalculator {
     if (copyBtn) copyBtn.addEventListener('click', copyShareLink);
     const ledgerBtn = document.getElementById('createLedger');
     if (ledgerBtn) ledgerBtn.addEventListener('click', createLedger);
+    if (copyLedgerBtn) copyLedgerBtn.addEventListener('click', copyLedger);
     const closeLedgerBtn = document.getElementById('closeLedger');
     if (closeLedgerBtn) closeLedgerBtn.addEventListener('click', () => ledgerModal.hidden = true);
     if (closeLedgerFooterBtn) closeLedgerFooterBtn.addEventListener('click', () => ledgerModal.hidden = true);

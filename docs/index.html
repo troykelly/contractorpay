@@ -157,37 +157,10 @@
     <div id="ledgerModal" class="modal" hidden>
         <div class="modal-content">
             <button type="button" class="close" id="closeLedger">&times;</button>
-            <h2>Ledger</h2>
-            <table class="ledger-table">
-                <thead>
-                    <tr>
-                        <th>Period</th>
-                        <th>Income ex GST</th>
-                        <th>GST</th>
-                        <th>Income inc GST</th>
-                        <th>Tax</th>
-                        <th>Super</th>
-                        <th>HECS</th>
-                        <th>Net</th>
-                    </tr>
-                </thead>
-                <tbody id="ledgerBody"></tbody>
-                <tfoot>
-                    <tr class="total-row">
-                        <th>Total</th>
-                        <td id="ledgerIncome"></td>
-                        <td id="ledgerGst"></td>
-                        <td id="ledgerIncomeInc"></td>
-                        <td id="ledgerTax"></td>
-                        <td id="ledgerSuper"></td>
-                        <td id="ledgerHecs"></td>
-                        <td id="ledgerNet"></td>
-                    </tr>
-                </tfoot>
-            </table>
-            <h3>General Ledger</h3>
+            <h2>General Ledger</h2>
             <div id="ledgerAccounts"></div>
             <div class="modal-actions">
+                <button type="button" id="copyLedger">Copy Ledger</button>
                 <button type="button" id="closeLedgerFooter">Close</button>
             </div>
         </div>
