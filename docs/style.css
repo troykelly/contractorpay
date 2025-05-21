@@ -23,6 +23,24 @@ h1 {
     margin-bottom: 15px;
 }
 
+.furlough-period {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.furlough-period input[type="date"] {
+    flex: 1;
+}
+
+.remove-furlough {
+    background: #dc3545;
+}
+
+.remove-furlough:hover {
+    background: #c82333;
+}
+
 label {
     display: block;
     margin-bottom: 5px;
