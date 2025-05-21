@@ -233,13 +233,23 @@
                 data-bs-toggle="tooltip"
                 title="About these fields"
               >
-                i
+                ⓘ
               </button>
             </div>
             <div class="mb-3">
-              <label for="riNet" class="form-label"
-                >Net investment losses ($)</label
-              >
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="riNet" class="form-label mb-0"
+                  >Net investment losses ($)</label
+                >
+                <button
+                  type="button"
+                  id="riNetInfoBtn"
+                  class="btn btn-link p-0 info-btn"
+                  aria-label="Net investment losses info"
+                >
+                  ⓘ
+                </button>
+              </div>
               <input
                 type="number"
                 id="riNet"
@@ -250,9 +260,19 @@
               />
             </div>
             <div class="mb-3">
-              <label for="riFringe" class="form-label"
-                >Reportable fringe benefits ($)</label
-              >
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="riFringe" class="form-label mb-0"
+                  >Reportable fringe benefits ($)</label
+                >
+                <button
+                  type="button"
+                  id="riFringeInfoBtn"
+                  class="btn btn-link p-0 info-btn"
+                  aria-label="Reportable fringe benefits info"
+                >
+                  ⓘ
+                </button>
+              </div>
               <input
                 type="number"
                 id="riFringe"
@@ -263,9 +283,19 @@
               />
             </div>
             <div class="mb-3">
-              <label for="riSuper" class="form-label"
-                >Reportable super contributions ($)</label
-              >
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="riSuper" class="form-label mb-0"
+                  >Reportable super contributions ($)</label
+                >
+                <button
+                  type="button"
+                  id="riSuperInfoBtn"
+                  class="btn btn-link p-0 info-btn"
+                  aria-label="Reportable super contributions info"
+                >
+                  ⓘ
+                </button>
+              </div>
               <input
                 type="number"
                 id="riSuper"
@@ -276,9 +306,19 @@
               />
             </div>
             <div class="mb-3">
-              <label for="riExempt" class="form-label"
-                >Exempt foreign employment income ($)</label
-              >
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="riExempt" class="form-label mb-0"
+                  >Exempt foreign employment income ($)</label
+                >
+                <button
+                  type="button"
+                  id="riExemptInfoBtn"
+                  class="btn btn-link p-0 info-btn"
+                  aria-label="Exempt foreign employment income info"
+                >
+                  ⓘ
+                </button>
+              </div>
               <input
                 type="number"
                 id="riExempt"
@@ -289,7 +329,19 @@
               />
             </div>
             <div class="mb-3">
-              <label for="hecsRate" class="form-label">HECS Rate (%)</label>
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="hecsRate" class="form-label mb-0"
+                  >HECS Rate (%)</label
+                >
+                <button
+                  type="button"
+                  id="hecsRateInfoBtn"
+                  class="btn btn-link p-0 info-btn"
+                  aria-label="HECS rate info"
+                >
+                  ⓘ
+                </button>
+              </div>
               <input
                 type="number"
                 id="hecsRate"
@@ -561,6 +613,91 @@
         <p>
           These amounts are added to your taxable income to determine the
           HECS/HELP repayment rate.
+        </p>
+      </div>
+    </div>
+
+    <div id="riNetInfoModal" class="tool-modal" hidden>
+      <div class="tool-modal-content">
+        <button
+          type="button"
+          class="btn-close float-end"
+          id="closeRiNetInfo"
+          aria-label="Close"
+        ></button>
+        <h2>Net Investment Losses</h2>
+        <p>
+          Include any losses from share or property investments. The ATO adds
+          these losses back to your taxable income when calculating your
+          repayment income for HECS/HELP.
+        </p>
+      </div>
+    </div>
+
+    <div id="riFringeInfoModal" class="tool-modal" hidden>
+      <div class="tool-modal-content">
+        <button
+          type="button"
+          class="btn-close float-end"
+          id="closeRiFringeInfo"
+          aria-label="Close"
+        ></button>
+        <h2>Reportable Fringe Benefits</h2>
+        <p>
+          Enter the total of any reportable fringe benefits shown on your income
+          statement. These benefits are treated as income for HECS/HELP
+          purposes, increasing your repayment income.
+        </p>
+      </div>
+    </div>
+
+    <div id="riSuperInfoModal" class="tool-modal" hidden>
+      <div class="tool-modal-content">
+        <button
+          type="button"
+          class="btn-close float-end"
+          id="closeRiSuperInfo"
+          aria-label="Close"
+        ></button>
+        <h2>Reportable Super Contributions</h2>
+        <p>
+          Extra super contributions you or your employer make (such as
+          salary-sacrificed amounts) are included in your repayment income for
+          HECS/HELP calculations.
+        </p>
+      </div>
+    </div>
+
+    <div id="riExemptInfoModal" class="tool-modal" hidden>
+      <div class="tool-modal-content">
+        <button
+          type="button"
+          class="btn-close float-end"
+          id="closeRiExemptInfo"
+          aria-label="Close"
+        ></button>
+        <h2>Exempt Foreign Employment Income</h2>
+        <p>
+          If you earn income overseas that is exempt from Australian tax, it
+          still counts toward your HECS/HELP repayment income. Enter that amount
+          here.
+        </p>
+      </div>
+    </div>
+
+    <div id="hecsRateInfoModal" class="tool-modal" hidden>
+      <div class="tool-modal-content">
+        <button
+          type="button"
+          class="btn-close float-end"
+          id="closeHecsRateInfo"
+          aria-label="Close"
+        ></button>
+        <h2>HECS Rate</h2>
+        <p>
+          Use this field to set aside an additional percentage of your pay for
+          voluntary HECS/HELP repayments. The rate is applied to your repayment
+          income when the calculator estimates your set-aside amount.
         </p>
       </div>
     </div>
