@@ -20,11 +20,81 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Deploy preview
-        uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./docs/
-          preview-branch: main
-          umbrella-dir: docs/pr-preview
-          pages-base-path: docs
+          fetch-depth: 0
+
+      - name: Manage preview with GitHub Script
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+            const pr = context.payload.pull_request;
+            const action = context.payload.action;
+            const prNumber = pr.number;
+            const prSha = pr.head.sha;
+            const previewDir = `docs/pr-preview/pr-${prNumber}`;
+
+            execSync('git config user.name "github-actions[bot]"');
+            execSync('git config user.email "github-actions[bot]@users.noreply.github.com"');
+            execSync('git fetch origin main');
+            execSync('git checkout -B main origin/main');
+
+            if (action === 'closed') {
+              if (fs.existsSync(previewDir)) {
+                execSync(`git rm -r --ignore-unmatch ${previewDir}`);
+              }
+              try {
+                execSync(`git commit -m "Remove preview for PR #${prNumber}"`);
+                execSync('git push origin main');
+              } catch (err) {
+                console.log('No preview to remove');
+              }
+            } else {
+              execSync(`rm -rf ${previewDir}`);
+              execSync(`mkdir -p ${previewDir}`);
+              execSync(
+                `git archive ${prSha} docs | tar --wildcards --exclude='docs/pr-preview/*' --exclude='docs/pr-preview' -x -C ${previewDir} --strip-components=1`
+              );
+              execSync(`git add ${previewDir}`);
+              const msg = action === 'synchronize' ? 'Update' : 'Add';
+              execSync(`git commit -m "${msg} preview for PR #${prNumber}"`);
+              execSync('git push origin main');
+            }
+
+            const timestamp = new Date()
+              .toISOString()
+              .replace('T', ' ')
+              .replace(/\..+/, ' UTC');
+
+            let status = 'created';
+            if (action === 'synchronize') status = 'updated';
+            if (action === 'closed') status = 'removed';
+
+            const body = `### PR Preview Generated\n:---:\nPreview ${status} because the pull request was ${action}.\n${timestamp}\n<!-- Sticky Pull Request Commentpr-preview -->`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find((c) =>
+              c.body.includes('<!-- Sticky Pull Request Commentpr-preview -->')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
