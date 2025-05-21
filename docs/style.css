@@ -190,6 +190,11 @@ input[type="number"] {
     justify-content: center;
 }
 
+/* ensure modals remain hidden when the attribute is set */
+.modal[hidden] {
+    display: none;
+}
+
 .modal-content {
     background: #fff;
     padding: 20px;
