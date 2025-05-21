@@ -257,7 +257,31 @@ class PayCalculator {
   const ledgerAccountsDiv = document.getElementById("ledgerAccounts");
   const closeLedgerFooterBtn = document.getElementById("closeLedgerFooter");
   const copyLedgerBtn = document.getElementById("copyLedger");
+  const hecsInfoModal = document.getElementById("hecsInfoModal");
+  const hecsInfoBtn = document.getElementById("openHecsInfo");
+  const closeHecsInfoBtn = document.getElementById("closeHecsInfo");
+  const riNetInfoModal = document.getElementById("riNetInfoModal");
+  const riNetInfoBtn = document.getElementById("riNetInfoBtn");
+  const closeRiNetInfoBtn = document.getElementById("closeRiNetInfo");
+  const riFringeInfoModal = document.getElementById("riFringeInfoModal");
+  const riFringeInfoBtn = document.getElementById("riFringeInfoBtn");
+  const closeRiFringeInfoBtn = document.getElementById("closeRiFringeInfo");
+  const riSuperInfoModal = document.getElementById("riSuperInfoModal");
+  const riSuperInfoBtn = document.getElementById("riSuperInfoBtn");
+  const closeRiSuperInfoBtn = document.getElementById("closeRiSuperInfo");
+  const riExemptInfoModal = document.getElementById("riExemptInfoModal");
+  const riExemptInfoBtn = document.getElementById("riExemptInfoBtn");
+  const closeRiExemptInfoBtn = document.getElementById("closeRiExemptInfo");
+  const hecsRateInfoModal = document.getElementById("hecsRateInfoModal");
+  const hecsRateInfoBtn = document.getElementById("hecsRateInfoBtn");
+  const closeHecsRateInfoBtn = document.getElementById("closeHecsRateInfo");
   if (ledgerModal) ledgerModal.hidden = true;
+  if (hecsInfoModal) hecsInfoModal.hidden = true;
+  if (riNetInfoModal) riNetInfoModal.hidden = true;
+  if (riFringeInfoModal) riFringeInfoModal.hidden = true;
+  if (riSuperInfoModal) riSuperInfoModal.hidden = true;
+  if (riExemptInfoModal) riExemptInfoModal.hidden = true;
+  if (hecsRateInfoModal) hecsRateInfoModal.hidden = true;
   let prevRateType = rateTypeSelect.value;
 
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
@@ -1078,6 +1102,87 @@ class PayCalculator {
   if (ledgerModal)
     ledgerModal.addEventListener("click", function (e) {
       if (e.target === ledgerModal) ledgerModal.hidden = true;
+    });
+  if (hecsInfoBtn)
+    hecsInfoBtn.addEventListener("click", () => (hecsInfoModal.hidden = false));
+  if (closeHecsInfoBtn)
+    closeHecsInfoBtn.addEventListener(
+      "click",
+      () => (hecsInfoModal.hidden = true),
+    );
+  if (hecsInfoModal)
+    hecsInfoModal.addEventListener("click", function (e) {
+      if (e.target === hecsInfoModal) hecsInfoModal.hidden = true;
+    });
+  if (riNetInfoBtn)
+    riNetInfoBtn.addEventListener(
+      "click",
+      () => (riNetInfoModal.hidden = false),
+    );
+  if (closeRiNetInfoBtn)
+    closeRiNetInfoBtn.addEventListener(
+      "click",
+      () => (riNetInfoModal.hidden = true),
+    );
+  if (riNetInfoModal)
+    riNetInfoModal.addEventListener("click", (e) => {
+      if (e.target === riNetInfoModal) riNetInfoModal.hidden = true;
+    });
+  if (riFringeInfoBtn)
+    riFringeInfoBtn.addEventListener(
+      "click",
+      () => (riFringeInfoModal.hidden = false),
+    );
+  if (closeRiFringeInfoBtn)
+    closeRiFringeInfoBtn.addEventListener(
+      "click",
+      () => (riFringeInfoModal.hidden = true),
+    );
+  if (riFringeInfoModal)
+    riFringeInfoModal.addEventListener("click", (e) => {
+      if (e.target === riFringeInfoModal) riFringeInfoModal.hidden = true;
+    });
+  if (riSuperInfoBtn)
+    riSuperInfoBtn.addEventListener(
+      "click",
+      () => (riSuperInfoModal.hidden = false),
+    );
+  if (closeRiSuperInfoBtn)
+    closeRiSuperInfoBtn.addEventListener(
+      "click",
+      () => (riSuperInfoModal.hidden = true),
+    );
+  if (riSuperInfoModal)
+    riSuperInfoModal.addEventListener("click", (e) => {
+      if (e.target === riSuperInfoModal) riSuperInfoModal.hidden = true;
+    });
+  if (riExemptInfoBtn)
+    riExemptInfoBtn.addEventListener(
+      "click",
+      () => (riExemptInfoModal.hidden = false),
+    );
+  if (closeRiExemptInfoBtn)
+    closeRiExemptInfoBtn.addEventListener(
+      "click",
+      () => (riExemptInfoModal.hidden = true),
+    );
+  if (riExemptInfoModal)
+    riExemptInfoModal.addEventListener("click", (e) => {
+      if (e.target === riExemptInfoModal) riExemptInfoModal.hidden = true;
+    });
+  if (hecsRateInfoBtn)
+    hecsRateInfoBtn.addEventListener(
+      "click",
+      () => (hecsRateInfoModal.hidden = false),
+    );
+  if (closeHecsRateInfoBtn)
+    closeHecsRateInfoBtn.addEventListener(
+      "click",
+      () => (hecsRateInfoModal.hidden = true),
+    );
+  if (hecsRateInfoModal)
+    hecsRateInfoModal.addEventListener("click", (e) => {
+      if (e.target === hecsRateInfoModal) hecsRateInfoModal.hidden = true;
     });
   if (rateChangeDiv) {
     rateChangeDiv.addEventListener("click", function (e) {
