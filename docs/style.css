@@ -64,6 +64,17 @@ button:hover {
     margin-top: 20px;
 }
 
+.result-explanation {
+    margin-top: 15px;
+    font-size: 0.9em;
+    line-height: 1.4;
+    max-width: 60ch;
+}
+
+.result-explanation p {
+    margin-bottom: 0.8em;
+}
+
 .results-table {
     width: 100%;
     border-collapse: collapse;
