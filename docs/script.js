@@ -411,15 +411,23 @@ class PayCalculator {
 
     if (data.fteSalary) {
       const ann = [];
-      ann.push(
-        `<p>Approx. full‑time salary <strong>$${formatMoney(
-          data.fteSalary,
-        )}</strong> per year</p>`,
-      );
       if (data.superRate > 0) {
         ann.push(
-          `<p>Total package about $${formatMoney(data.ftePackage)} per year</p>`,
+          `<p>Total package about <strong>$${formatMoney(
+            data.ftePackage,
+          )}</strong> per year</p>`,
         );
+      } else {
+        ann.push(
+          `<p>Total package about <strong>$${formatMoney(
+            data.fteSalary,
+          )}</strong> per year</p>`,
+        );
+      }
+      ann.push(`<p>Base salary about $${formatMoney(data.fteSalary)}</p>`);
+      ann.push(`<p>Less income tax $${formatMoney(data.fteTax)}</p>`);
+      if (data.fteHecs > 0) {
+        ann.push(`<p>Less HECS/HELP $${formatMoney(data.fteHecs)}</p>`);
       }
       if (data.fteNet && data.perInvoiceNet) {
         const words = {
@@ -430,9 +438,11 @@ class PayCalculator {
         };
         const freqWord = words[data.invoiceFreq] || data.invoiceFreq;
         ann.push(
-          `<p>Take‑home about $${formatMoney(
+          `<p>Take‑home about <strong>$${formatMoney(
             data.fteNet,
-          )} per year (around $${formatMoney(data.perInvoiceNet)} each ${freqWord})</p>`,
+          )}</strong> per year (around $${formatMoney(
+            data.perInvoiceNet,
+          )} each ${freqWord})</p>`,
         );
       }
       sections.push(
@@ -590,7 +600,8 @@ class PayCalculator {
     const fy = `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
     const fteTax = AusTaxBrackets.calculateTax(fteSalary, fy);
     const fteSuper = fteSalary * superRate;
-    const fteHecs = fteSalary * hecsRate;
+    const fteHecs =
+      hecsRate > 0 ? AusTaxBrackets.calculateHecs(fteSalary, fy) : 0;
     const ftePackage = fteSalary + fteSuper;
     const fteNet = fteSalary - fteTax - fteSuper - fteHecs;
     const freqMap = { weekly: 52, fortnightly: 26, monthly: 12, quarterly: 4 };
@@ -606,6 +617,8 @@ class PayCalculator {
       netAmount,
       fteSalary,
       ftePackage,
+      fteTax,
+      fteHecs,
       fteNet,
       perInvoiceNet,
       invoiceFreq: invoiceFreqSelect.value,
