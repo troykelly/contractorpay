@@ -175,7 +175,7 @@ class PayCalculator {
         const daily = convertRate(currentRate, baseRateType, 'daily', baseHoursPerDay);
         const calc = new PayCalculator(daily, otherRates.gstRate, otherRates.taxRate, otherRates.superRate, otherRates.hecsRate);
         const { netAmount } = calc.calculate(baseWorkingDays);
-        changedNetSpan.textContent = '$' + formatMoney(netAmount);
+        changedNetSpan.textContent = formatMoney(netAmount);
         const pct = baseRate ? ((currentRate - baseRate) / baseRate) * 100 : 0;
         rateChangePercentSpan.textContent = pct.toFixed(1);
     }
@@ -183,6 +183,11 @@ class PayCalculator {
     function adjustRate(delta) {
         currentRate += delta;
         updateRateChangeUI();
+    }
+
+    function adjustRatePercent(percent) {
+        const delta = baseRate * (percent / 100);
+        adjustRate(delta);
     }
 
     ['rate','gstRate','taxRate','superRate','hecsRate','startDate','endDate','state','holidayDays','hoursPerDay'].forEach(attachAutoCalc);
@@ -322,7 +327,7 @@ class PayCalculator {
         const encoded = encodeURIComponent(btoa(JSON.stringify(data)));
         const url = `${location.origin}${location.pathname}?link=${encoded}`;
         const net = document.getElementById('netAmount').textContent || '0';
-        const text = `I've used a contractor income calculator to calculate approximately $${net} should be banked for the period ${data.startDate} to ${data.endDate} @ $${data.rate}/${data.rateType}. ${url}`;
+        const text = `I've used a contractor income calculator to calculate approximately ${net} should be banked for the period ${data.startDate} to ${data.endDate} @ $${data.rate}/${data.rateType}. ${url}`;
         try {
             await navigator.clipboard.writeText(text);
             alert('Share link copied to clipboard');
@@ -347,8 +352,12 @@ class PayCalculator {
     if (copyBtn) copyBtn.addEventListener('click', copyShareLink);
     if (rateChangeDiv) {
         rateChangeDiv.addEventListener('click', function(e) {
-            if (e.target.dataset && e.target.dataset.inc) {
-                adjustRate(parseFloat(e.target.dataset.inc));
+            if (e.target.dataset) {
+                if (e.target.dataset.inc) {
+                    adjustRate(parseFloat(e.target.dataset.inc));
+                } else if (e.target.dataset.pct) {
+                    adjustRatePercent(parseFloat(e.target.dataset.pct));
+                }
             }
         });
     }
