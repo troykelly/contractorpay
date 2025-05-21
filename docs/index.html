@@ -65,8 +65,7 @@
         </div>
 
         <div class="form-group">
-            <label for="gstRate">GST Rate (%)</label>
-            <input type="number" id="gstRate" value="10">
+            <label><input type="checkbox" id="collectGst" checked> Collect GST</label>
         </div>
 
         <div class="form-group">
@@ -100,7 +99,7 @@
                 <h2>Results</h2>
                 <table class="results-table">
                     <tbody>
-                        <tr><th>Total income (ex GST)</th><td id="incomeExGst"></td></tr>
+                        <tr><th id="incomeLabel">Total income (ex GST)</th><td id="incomeTotal"></td></tr>
                         <tr><th>GST to set aside</th><td id="gstAmount"></td></tr>
                         <tr><th>Estimated tax to set aside</th><td id="taxAmount"></td></tr>
                         <tr><th>Super to set aside</th><td id="superAmount"></td></tr>

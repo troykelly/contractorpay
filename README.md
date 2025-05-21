@@ -4,7 +4,7 @@ This repository contains a simple static web application that helps Australian c
 
 The application is completely client side and hosted using GitHub Pages from the [`docs/`](docs/) directory.
 It allows you to input your daily rate, select a date range and state, and it automatically calculates the working days in that period (excluding weekends and public holidays).
-You can then adjust GST and approximate tax rates to see how much money you might bank after setting aside tax.
+GST is fixed at 10% with an optional **Collect GST** checkbox. Toggle it and adjust approximate tax rates to see how much money you might bank after setting aside tax.
 
 The calculator can generate a share link with your inputs. Click **Copy Share Link** to copy explanatory text and a URL to your clipboard that will prefill the form for anyone who opens it.
 

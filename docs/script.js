@@ -50,11 +50,12 @@ class PayCalculator {
     calculate(workingDays) {
         const incomeExGst = this.dailyRate * workingDays;
         const gstAmount = incomeExGst * this.gstRate;
+        const incomeIncGst = incomeExGst + gstAmount;
         const taxAmount = incomeExGst * this.taxRate;
         const superAmount = incomeExGst * this.superRate;
         const hecsAmount = incomeExGst * this.hecsRate;
         const netAmount = incomeExGst - taxAmount - superAmount - hecsAmount;
-        return { incomeExGst, gstAmount, taxAmount, superAmount, hecsAmount, netAmount };
+        return { incomeExGst, incomeIncGst, gstAmount, taxAmount, superAmount, hecsAmount, netAmount };
     }
 
     static isWeekend(date) {
@@ -173,7 +174,7 @@ class PayCalculator {
         if (!rateChangeDiv) return;
         currentRateSpan.textContent = '$' + formatMoney(currentRate);
         const daily = convertRate(currentRate, baseRateType, 'daily', baseHoursPerDay);
-        const calc = new PayCalculator(daily, otherRates.gstRate, otherRates.taxRate, otherRates.superRate, otherRates.hecsRate);
+        const calc = new PayCalculator(daily, otherRates.collectGst ? 0.1 : 0, otherRates.taxRate, otherRates.superRate, otherRates.hecsRate);
         const { netAmount } = calc.calculate(baseWorkingDays);
         changedNetSpan.textContent = '$' + formatMoney(netAmount);
         const pct = baseRate ? ((currentRate - baseRate) / baseRate) * 100 : 0;
@@ -185,12 +186,12 @@ class PayCalculator {
         updateRateChangeUI();
     }
 
-    ['rate','gstRate','taxRate','superRate','hecsRate','startDate','endDate','state','holidayDays','hoursPerDay'].forEach(attachAutoCalc);
+    ['rate','collectGst','taxRate','superRate','hecsRate','startDate','endDate','state','holidayDays','hoursPerDay'].forEach(attachAutoCalc);
 
     async function calculate() {
         const rate = parseFloat(rateInput.value) || 0;
         const dailyRate = convertRate(rate, rateTypeSelect.value, 'daily');
-        const gstRate = parseFloat(document.getElementById('gstRate').value) / 100 || 0;
+        const gstRate = document.getElementById('collectGst').checked ? 0.1 : 0;
         const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0;
         const superRate = parseFloat(superInput.value) / 100 || 0;
         const hecsRate = parseFloat(hecsInput.value) / 100 || 0;
@@ -244,9 +245,17 @@ class PayCalculator {
         document.getElementById('workingDays').value = workingDays;
 
         const calc = new PayCalculator(dailyRate, gstRate, taxRate, superRate, hecsRate);
-        const { incomeExGst, gstAmount, taxAmount, superAmount, hecsAmount, netAmount } = calc.calculate(workingDays);
+        const { incomeExGst, incomeIncGst, gstAmount, taxAmount, superAmount, hecsAmount, netAmount } = calc.calculate(workingDays);
 
-        document.getElementById('incomeExGst').textContent = '$' + formatMoney(incomeExGst);
+        const incomeLabelEl = document.getElementById('incomeLabel');
+        const incomeTotalEl = document.getElementById('incomeTotal');
+        if (gstRate > 0) {
+            incomeLabelEl.textContent = 'Total income (inc GST)';
+            incomeTotalEl.textContent = '$' + formatMoney(incomeIncGst);
+        } else {
+            incomeLabelEl.textContent = 'Total income (ex GST)';
+            incomeTotalEl.textContent = '$' + formatMoney(incomeExGst);
+        }
         document.getElementById('gstAmount').textContent = '$' + formatMoney(gstAmount);
         document.getElementById('taxAmount').textContent = '$' + formatMoney(taxAmount);
         document.getElementById('superAmount').textContent = '$' + formatMoney(superAmount);
@@ -263,7 +272,7 @@ class PayCalculator {
         baseHoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
         currentRate = baseRate;
         baseWorkingDays = workingDays;
-        otherRates = { gstRate, taxRate, superRate, hecsRate };
+        otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
         updateRateChangeUI();
     }
 
@@ -282,7 +291,7 @@ class PayCalculator {
             endDate: document.getElementById('endDate').value,
             state: document.getElementById('state').value,
             holidayDays: holidayInput.value,
-            gstRate: document.getElementById('gstRate').value,
+            collectGst: document.getElementById('collectGst').checked,
             taxRate: document.getElementById('taxRate').value,
             superRate: superInput.value,
             hecsRate: hecsInput.value,
@@ -299,7 +308,7 @@ class PayCalculator {
         document.getElementById('endDate').value = data.endDate || '';
         document.getElementById('state').value = data.state || 'ACT';
         holidayInput.value = data.holidayDays || 0;
-        document.getElementById('gstRate').value = data.gstRate || 10;
+        document.getElementById('collectGst').checked = data.collectGst !== false;
         document.getElementById('taxRate').value = data.taxRate || 30;
         superInput.value = data.superRate || 11;
         hecsInput.value = data.hecsRate || 0;
