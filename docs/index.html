@@ -223,11 +223,31 @@
             >
           </div>
           <div id="hecsSection" style="display: none">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h5 mb-0">HECS/HELP Details</h2>
+              <button
+                type="button"
+                id="openHecsInfo"
+                class="btn btn-link p-0 info-btn"
+                aria-label="HECS information"
+                data-bs-toggle="tooltip"
+                title="About these fields"
+              >
+                i
+              </button>
+            </div>
             <div class="mb-3">
               <label for="riNet" class="form-label"
                 >Net investment losses ($)</label
               >
-              <input type="number" id="riNet" class="form-control" value="0" />
+              <input
+                type="number"
+                id="riNet"
+                class="form-control"
+                value="0"
+                data-bs-toggle="tooltip"
+                title="Losses from shares or property"
+              />
             </div>
             <div class="mb-3">
               <label for="riFringe" class="form-label"
@@ -238,6 +258,8 @@
                 id="riFringe"
                 class="form-control"
                 value="0"
+                data-bs-toggle="tooltip"
+                title="Fringe benefits shown on your summary"
               />
             </div>
             <div class="mb-3">
@@ -249,6 +271,8 @@
                 id="riSuper"
                 class="form-control"
                 value="0"
+                data-bs-toggle="tooltip"
+                title="Extra super you salary sacrificed"
               />
             </div>
             <div class="mb-3">
@@ -260,6 +284,8 @@
                 id="riExempt"
                 class="form-control"
                 value="0"
+                data-bs-toggle="tooltip"
+                title="Overseas income that is tax exempt"
               />
             </div>
             <div class="mb-3">
@@ -502,6 +528,40 @@
             Close
           </button>
         </div>
+      </div>
+    </div>
+
+    <div id="hecsInfoModal" class="tool-modal" hidden>
+      <div class="tool-modal-content">
+        <button
+          type="button"
+          class="btn-close float-end"
+          id="closeHecsInfo"
+          aria-label="Close"
+        ></button>
+        <h2>HECS/HELP Field Information</h2>
+        <ul>
+          <li>
+            <strong>Net investment losses</strong> – losses from property or
+            shares.
+          </li>
+          <li>
+            <strong>Reportable fringe benefits</strong> – benefits listed on
+            your PAYG summary.
+          </li>
+          <li>
+            <strong>Reportable super contributions</strong> – extra super you or
+            your employer pay.
+          </li>
+          <li>
+            <strong>Exempt foreign employment income</strong> – overseas
+            earnings that are tax exempt.
+          </li>
+        </ul>
+        <p>
+          These amounts are added to your taxable income to determine the
+          HECS/HELP repayment rate.
+        </p>
       </div>
     </div>
 
