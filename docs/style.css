@@ -5,7 +5,7 @@ body {
     background: #f5f5f5;
 }
 
-.container {
+.tool-container {
     max-width: 1000px;
     margin: 40px auto;
     padding: 20px;
@@ -134,11 +134,7 @@ button:hover {
     margin: 10px 0;
 }
 
-.actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
+
 
 select,
 input[type="date"],
@@ -150,20 +146,8 @@ input[type="number"] {
     border-radius: 4px;
 }
 
-.layout {
-    display: block;
-}
-
-.form-section {
-    flex: 1;
-}
-
-.results-section {
-    flex: 1;
-}
-
 @media (max-width: 600px) {
-    .container {
+    .tool-container {
         margin: 20px;
         border-radius: 0;
         box-shadow: none;
@@ -180,16 +164,12 @@ input[type="number"] {
 }
 
 @media (min-width: 900px) {
-    .layout {
-        display: flex;
-        gap: 20px;
-    }
     .results {
         margin-top: 0;
     }
 }
 
-.modal {
+.tool-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -202,11 +182,11 @@ input[type="number"] {
 }
 
 /* ensure modals remain hidden when the attribute is set */
-.modal[hidden] {
+.tool-modal[hidden] {
     display: none;
 }
 
-.modal-content {
+.tool-modal-content {
     background: #fff;
     padding: 20px;
     border-radius: 8px;
@@ -246,11 +226,4 @@ input[type="number"] {
 .account-table th:first-child,
 .account-table td:first-child {
     text-align: left;
-}
-.close {
-    float: right;
-    border: none;
-    background: none;
-    font-size: 1.5em;
-    cursor: pointer;
 }
