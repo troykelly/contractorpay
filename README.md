@@ -12,7 +12,7 @@ The calculator can generate a share link with your inputs. Click **Copy Share Li
 
 The code now includes a basic public holiday service. It attempts to retrieve holiday data from the public API at [Nager.Date](https://date.nager.at) and falls back to an internal list if the request fails.
 
-The results page also explains the equivalent full time salary for your entered rate and estimates your total salary package including superannuation. Current Australian tax brackets are fetched from an API when possible (with a local fallback) to estimate annual tax and typical take‑home pay. Your estimated net income is shown per your selected invoice frequency (weekly, fortnightly, monthly or quarterly).
+The results page also explains the equivalent full‑time salary for your entered rate. Hourly, daily and weekly rates are converted to an annual figure using a 7.2 hour day and 260 working days per year. Tax calculations rely on the official ATO tables provided in [`aus_tax_brackets.js`](docs/aus_tax_brackets.js). From this the tool derives an indicative total salary package including superannuation and any HECS repayments and shows your approximate take‑home pay for each invoice cycle (weekly, fortnightly, monthly or quarterly).
 
 ## Design system
 
