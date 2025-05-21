@@ -364,38 +364,61 @@ class PayCalculator {
   function generateExplanation(data) {
     const expEl = document.getElementById("resultExplanation");
     if (!expEl) return;
-    const parts = [];
-    parts.push(
-      `The total on your invoice is $${formatMoney(data.incomeIncGst)}. This is the amount you ask your client to pay.`,
+    const sections = [];
+    const inv = [];
+    inv.push(
+      `<p>Total invoice <strong>$${formatMoney(data.incomeIncGst)}</strong></p>`,
     );
     if (data.gstAmount > 0) {
-      parts.push(
-        `Of this total, $${formatMoney(data.gstAmount)} is Goods and Services Tax (GST). GST is collected for the tax office and is not yours to keep.`,
+      inv.push(
+        `<p>GST portion $${formatMoney(data.gstAmount)} (not yours to keep)</p>`,
       );
     }
-    parts.push(
-      `The remaining amount before tax is your actual earnings. You should set aside roughly $${formatMoney(data.taxAmount)} for income tax.`,
+    sections.push(
+      `<section class="explanation-section invoice-summary"><h3>🧾 Invoice Summary</h3>${inv.join(
+        "",
+      )}</section>`,
     );
-    if (data.superAmount > 0) {
-      parts.push(
-        `You also need to put $${formatMoney(data.superAmount)} into your superannuation account. Super is money saved for retirement and isn't part of your take-home pay.`,
-      );
-    }
+
+    const taxParts = [];
+    taxParts.push(
+      `<p>Income tax to set aside <strong>$${formatMoney(data.taxAmount)}</strong></p>`,
+    );
     if (data.hecsAmount > 0) {
-      parts.push(
-        `If you have a HECS or HELP debt, keep about $${formatMoney(data.hecsAmount)} aside to pay it. This comes out after tax because it is a personal loan, similar to any other loan you might repay.`,
+      taxParts.push(
+        `<p>HECS repayment about $${formatMoney(data.hecsAmount)}</p>`,
       );
     }
-    parts.push(
-      `After putting aside these amounts you will have around $${formatMoney(data.netAmount)} left. This is effectively your take‑home salary for day‑to‑day spending.`,
+    sections.push(
+      `<section class="explanation-section tax-breakdown"><h3>💸 Tax Breakdown</h3>${taxParts.join(
+        "",
+      )}</section>`,
     );
+
+    if (data.superAmount > 0) {
+      sections.push(
+        `<section class="explanation-section super"><h3>🏦 Superannuation</h3><p>Set aside <strong>$${formatMoney(
+          data.superAmount,
+        )}</strong> for retirement</p></section>`,
+      );
+    }
+
+    sections.push(
+      `<section class="explanation-section take-home"><h3>💰 Take‑home Pay</h3><p class="amount">$${formatMoney(
+        data.netAmount,
+      )}</p></section>`,
+    );
+
     if (data.fteSalary) {
-      parts.push(
-        `At this rate your equivalent full‑time salary is about $${formatMoney(data.fteSalary)} per year.`,
+      const ann = [];
+      ann.push(
+        `<p>Approx. full‑time salary <strong>$${formatMoney(
+          data.fteSalary,
+        )}</strong> per year</p>`,
       );
       if (data.superRate > 0) {
-        parts.push(
-          `Including superannuation, your total package is roughly $${formatMoney(data.ftePackage)} per year.`,
+        ann.push(
+          `<p>Total package about $${formatMoney(data.ftePackage)} per year</p>`,
         );
       }
       if (data.fteNet && data.perInvoiceNet) {
@@ -406,12 +429,20 @@ class PayCalculator {
           quarterly: "quarter",
         };
         const freqWord = words[data.invoiceFreq] || data.invoiceFreq;
-        parts.push(
-          `After tax${data.hecsRate > 0 ? " and HECS" : ""}, take‑home pay is around $${formatMoney(data.fteNet)} per year, or about $${formatMoney(data.perInvoiceNet)} each ${freqWord}.`,
+        ann.push(
+          `<p>Take‑home about $${formatMoney(
+            data.fteNet,
+          )} per year (around $${formatMoney(data.perInvoiceNet)} each ${freqWord})</p>`,
         );
       }
+      sections.push(
+        `<section class="explanation-section annual"><h3>📈 Annualised Equivalent</h3>${ann.join(
+          "",
+        )}</section>`,
+      );
     }
-    expEl.innerHTML = "<p>" + parts.join("</p><p>") + "</p>";
+
+    expEl.innerHTML = sections.join("");
   }
 
   function adjustRate(delta) {
