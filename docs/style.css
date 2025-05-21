@@ -89,3 +89,8 @@ button:hover {
     font-size: 0.8em;
     color: #777;
 }
+
+.error {
+    color: #c00;
+    margin: 10px 0;
+}

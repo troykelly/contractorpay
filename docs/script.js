@@ -39,18 +39,22 @@ class HolidayService {
 }
 
 class PayCalculator {
-    constructor(dailyRate, gstRate, taxRate) {
+    constructor(dailyRate, gstRate, taxRate, superRate, hecsRate) {
         this.dailyRate = dailyRate;
         this.gstRate = gstRate;
         this.taxRate = taxRate;
+        this.superRate = superRate;
+        this.hecsRate = hecsRate;
     }
 
     calculate(workingDays) {
         const incomeExGst = this.dailyRate * workingDays;
         const gstAmount = incomeExGst * this.gstRate;
         const taxAmount = incomeExGst * this.taxRate;
-        const netAmount = incomeExGst - taxAmount;
-        return { incomeExGst, gstAmount, taxAmount, netAmount };
+        const superAmount = incomeExGst * this.superRate;
+        const hecsAmount = incomeExGst * this.hecsRate;
+        const netAmount = incomeExGst - taxAmount - superAmount - hecsAmount;
+        return { incomeExGst, gstAmount, taxAmount, superAmount, hecsAmount, netAmount };
     }
 
     static isWeekend(date) {
@@ -90,11 +94,14 @@ class PayCalculator {
     }
 
     const resultsDiv = document.getElementById('results');
+    const errorDiv = document.getElementById('error');
     const rateInput = document.getElementById('rate');
     const rateTypeSelect = document.getElementById('rateType');
     const hoursPerDayInput = document.getElementById('hoursPerDay');
     const holidayInput = document.getElementById('holidayDays');
     const furloughContainer = document.getElementById('furloughContainer');
+    const superInput = document.getElementById('superRate');
+    const hecsInput = document.getElementById('hecsRate');
     let prevRateType = rateTypeSelect.value;
 
     function convertRate(value, from, to) {
@@ -128,6 +135,11 @@ class PayCalculator {
             calculate();
         }
     });
+    furloughContainer.addEventListener('input', function(e) {
+        if (e.target.classList.contains('furlough-start') || e.target.classList.contains('furlough-end')) {
+            calculate();
+        }
+    });
     document.getElementById('addFurlough').addEventListener('click', function() {
         addFurloughRow();
     });
@@ -145,20 +157,31 @@ class PayCalculator {
         if (el) el.addEventListener('input', calculate);
     }
 
-    ['rate','gstRate','taxRate','startDate','endDate','state','holidayDays','hoursPerDay'].forEach(attachAutoCalc);
+    ['rate','gstRate','taxRate','superRate','hecsRate','startDate','endDate','state','holidayDays','hoursPerDay'].forEach(attachAutoCalc);
 
     async function calculate() {
         const rate = parseFloat(rateInput.value) || 0;
         const dailyRate = convertRate(rate, rateTypeSelect.value, 'daily');
         const gstRate = parseFloat(document.getElementById('gstRate').value) / 100 || 0;
         const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0;
+        const superRate = parseFloat(superInput.value) / 100 || 0;
+        const hecsRate = parseFloat(hecsInput.value) / 100 || 0;
         const startDateVal = document.getElementById('startDate').value;
         const endDateVal = document.getElementById('endDate').value;
         const state = document.getElementById('state').value;
+        errorDiv.textContent = '';
+        errorDiv.hidden = true;
         let workingDays = 0;
+        let furloughDays = 0;
         if (startDateVal && endDateVal && state) {
             const startDate = new Date(startDateVal);
             const endDate = new Date(endDateVal);
+            if (startDate > endDate) {
+                errorDiv.textContent = 'Start date must be before end date.';
+                errorDiv.hidden = false;
+                resultsDiv.hidden = true;
+                return;
+            }
             workingDays = await PayCalculator.countWorkingDays(startDate, endDate, state);
 
             const holidayDays = parseInt(holidayInput.value) || 0;
@@ -171,7 +194,20 @@ class PayCalculator {
                 if (fs && fe) {
                     const start = new Date(fs);
                     const end = new Date(fe);
+                    if (start > end) {
+                        errorDiv.textContent = 'Furlough start must be before end.';
+                        errorDiv.hidden = false;
+                        resultsDiv.hidden = true;
+                        return;
+                    }
+                    if (start < startDate || end > endDate) {
+                        errorDiv.textContent = 'Furlough period must be within contract dates.';
+                        errorDiv.hidden = false;
+                        resultsDiv.hidden = true;
+                        return;
+                    }
                     const days = await PayCalculator.countWorkingDays(start, end, state);
+                    furloughDays += days;
                     workingDays -= days;
                 }
             }
@@ -179,13 +215,18 @@ class PayCalculator {
         if (workingDays < 0) workingDays = 0;
         document.getElementById('workingDays').value = workingDays;
 
-        const calc = new PayCalculator(dailyRate, gstRate, taxRate);
-        const { incomeExGst, gstAmount, taxAmount, netAmount } = calc.calculate(workingDays);
+        const calc = new PayCalculator(dailyRate, gstRate, taxRate, superRate, hecsRate);
+        const { incomeExGst, gstAmount, taxAmount, superAmount, hecsAmount, netAmount } = calc.calculate(workingDays);
 
         document.getElementById('incomeExGst').textContent = formatMoney(incomeExGst);
         document.getElementById('gstAmount').textContent = formatMoney(gstAmount);
         document.getElementById('taxAmount').textContent = formatMoney(taxAmount);
+        document.getElementById('superAmount').textContent = formatMoney(superAmount);
+        document.getElementById('hecsAmount').textContent = formatMoney(hecsAmount);
         document.getElementById('netAmount').textContent = formatMoney(netAmount);
+        document.getElementById('totalFurloughDays').textContent = furloughDays;
+        const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
+        document.getElementById('totalHours').textContent = formatMoney(workingDays * hoursPerDay);
 
         resultsDiv.hidden = false;
     }
