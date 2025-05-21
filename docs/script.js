@@ -323,6 +323,7 @@ class PayCalculator {
         if (!data) return;
         rateInput.value = data.rate || '';
         rateTypeSelect.value = data.rateType || 'daily';
+        prevRateType = rateTypeSelect.value;
         document.getElementById('startDate').value = data.startDate || '';
         document.getElementById('endDate').value = data.endDate || '';
         document.getElementById('state').value = data.state || 'ACT';
@@ -459,9 +460,10 @@ class PayCalculator {
         const data = collectFormData();
         const encoded = encodeURIComponent(btoa(JSON.stringify(data)));
         const url = `${location.origin}${location.pathname}?link=${encoded}`;
+        const displayUrl = `${location.origin}${location.pathname}`;
         const net = document.getElementById('netAmount').textContent || '0';
         const plain = `I've used a contractor income calculator to calculate approximately ${net} should be banked for the period ${data.startDate} to ${data.endDate} @ $${data.rate}/${data.rateType}. ${url}`;
-        const html = `<p>I've used a <strong>contractor income calculator</strong> to calculate approximately <strong>${net}</strong> should be banked for the period <strong>${data.startDate}</strong> to <strong>${data.endDate}</strong> @ <strong>$${data.rate}/${data.rateType}</strong>. <a href="${url}">${url}</a></p>`;
+        const html = `<p>I've used a <strong>contractor income calculator</strong> to calculate approximately <strong>${net}</strong> should be banked for the period <strong>${data.startDate}</strong> to <strong>${data.endDate}</strong> @ <strong>$${data.rate}/${data.rateType}</strong>. <a href="${url}">${displayUrl}</a></p>`;
         try {
             if (navigator.clipboard && window.ClipboardItem) {
                 const item = new ClipboardItem({
