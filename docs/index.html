@@ -17,9 +17,29 @@
         </div>
 
         <div class="form-group">
+            <label for="startDate">Start Date</label>
+            <input type="date" id="startDate">
+        </div>
+        <div class="form-group">
+            <label for="endDate">End Date</label>
+            <input type="date" id="endDate">
+        </div>
+        <div class="form-group">
+            <label for="state">State/Territory</label>
+            <select id="state">
+                <option value="ACT">ACT</option>
+                <option value="NSW">NSW</option>
+                <option value="NT">NT</option>
+                <option value="QLD">QLD</option>
+                <option value="SA">SA</option>
+                <option value="TAS">TAS</option>
+                <option value="VIC">VIC</option>
+                <option value="WA">WA</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="workingDays">Working Days in Period</label>
-            <input type="number" id="workingDays" value="20">
-            <small class="note">TODO: automatically calculate working days for each Australian state/territory.</small>
+            <input type="number" id="workingDays" value="0" readonly>
         </div>
 
         <div class="form-group">
