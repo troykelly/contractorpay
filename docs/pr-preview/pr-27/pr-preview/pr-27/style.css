@@ -74,26 +74,6 @@ button:hover {
   margin-bottom: 0.8em;
 }
 
-.result-explanation .explanation-section {
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 1rem;
-  background: #fafafa;
-}
-
-.result-explanation .explanation-section h3 {
-  margin-top: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.result-explanation .take-home .amount {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 0;
-}
-
 .results-table {
   width: 100%;
   border-collapse: collapse;
