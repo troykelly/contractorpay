@@ -242,6 +242,14 @@ class PayCalculator {
   const furloughContainer = document.getElementById("furloughContainer");
   const superInput = document.getElementById("superRate");
   const hecsInput = document.getElementById("hecsRate");
+  const hasHecsCheckbox = document.getElementById("hasHecs");
+  const hecsSection = document.getElementById("hecsSection");
+  const riTaxableInput = document.getElementById("riTaxable");
+  const riNetInput = document.getElementById("riNet");
+  const riFringeInput = document.getElementById("riFringe");
+  const riSuperInput = document.getElementById("riSuper");
+  const riExemptInput = document.getElementById("riExempt");
+  const riTotalInput = document.getElementById("riTotal");
   const invoiceFreqSelect = document.getElementById("invoiceFreq");
   const invoiceDayInput = document.getElementById("invoiceDay");
   const invoiceDayGroup = document.getElementById("invoiceDayGroup");
@@ -255,6 +263,23 @@ class PayCalculator {
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
     new bootstrap.Tooltip(el);
   });
+
+  if (hasHecsCheckbox) {
+    hasHecsCheckbox.addEventListener("change", () => {
+      hecsSection.style.display = hasHecsCheckbox.checked ? "" : "none";
+      if (!hasHecsCheckbox.checked) {
+        hecsInput.dataset.userEdited = "";
+        hecsInput.value = 0;
+      }
+      calculate();
+    });
+  }
+
+  if (hecsInput) {
+    hecsInput.addEventListener("input", () => {
+      hecsInput.dataset.userEdited = "true";
+    });
+  }
 
   const currentRateSpan = document.getElementById("currentRate");
   const changedNetSpan = document.getElementById("changedNet");
@@ -339,6 +364,22 @@ class PayCalculator {
     if (el) el.addEventListener("input", calculate);
   }
 
+  function updateRepaymentIncome(fy) {
+    if (!hasHecsCheckbox || !hasHecsCheckbox.checked) return 0;
+    const taxable = parseFloat(riTaxableInput.value) || 0;
+    const net = parseFloat(riNetInput.value) || 0;
+    const fringe = parseFloat(riFringeInput.value) || 0;
+    const superc = parseFloat(riSuperInput.value) || 0;
+    const exempt = parseFloat(riExemptInput.value) || 0;
+    const total = taxable + net + fringe + superc + exempt;
+    riTotalInput.value = total.toFixed(2);
+    const rate = AusTaxBrackets.hecsRate(total, fy) * 100;
+    if (!hecsInput.dataset.userEdited) {
+      hecsInput.value = rate.toFixed(2);
+    }
+    return total;
+  }
+
   function updateRateChangeUI() {
     if (!rateChangeDiv) return;
     currentRateSpan.textContent = "$" + formatMoney(currentRate);
@@ -411,21 +452,42 @@ class PayCalculator {
 
     if (data.fteSalary) {
       const ann = [];
-      ann.push(
-        `<p>Approx. full‑time salary <strong>$${formatMoney(
-          data.fteSalary,
-        )}</strong></p>`,
-      );
       if (data.superRate > 0) {
-        ann.push(`<p>Total package about $${formatMoney(data.ftePackage)}</p>`);
+        ann.push(
+          `<p><strong>Total package</strong> $${formatMoney(data.ftePackage)}</p>`,
+        );
+        ann.push(
+          `<p>Package without super $${formatMoney(data.fteSalary)}</p>`,
+        );
+      } else {
+        ann.push(
+          `<p><strong>Total package</strong> $${formatMoney(data.fteSalary)}</p>`,
+        );
       }
       ann.push(
-        `<p>PAYG tax about $${formatMoney(
+        `<p>Less PAYG tax about $${formatMoney(
           data.fteTax,
         )} (assumes first employer & includes Medicare levy)</p>`,
       );
-      if (data.fteNet) {
-        ann.push(`<p>Take‑home about $${formatMoney(data.fteNet)}</p>`);
+      if (data.hecsRate > 0) {
+        ann.push(`<p>Less HECS/HELP about $${formatMoney(data.fteHecs)}</p>`);
+      }
+      ann.push(
+        `<p><strong>Annual take‑home about $${formatMoney(data.fteNet)}</strong></p>`,
+      );
+      if (data.invoiceFreq) {
+        const div = { weekly: 52, fortnightly: 26, monthly: 12, quarterly: 4 }[
+          data.invoiceFreq
+        ];
+        if (div) {
+          const label = {
+            weekly: "Weekly",
+            fortnightly: "Fortnightly",
+            monthly: "Monthly",
+            quarterly: "Quarterly",
+          }[data.invoiceFreq];
+          ann.push(`<p>${label} about $${formatMoney(data.fteNet / div)}</p>`);
+        }
       }
       sections.push(
         `<section class="explanation-section annual"><h3>📈 Full‑Time Equivalent</h3>${ann.join(
@@ -453,6 +515,12 @@ class PayCalculator {
     "taxRate",
     "superRate",
     "hecsRate",
+    "hasHecs",
+    "riTaxable",
+    "riNet",
+    "riFringe",
+    "riSuper",
+    "riExempt",
     "startDate",
     "endDate",
     "state",
@@ -467,7 +535,7 @@ class PayCalculator {
     const taxRate =
       parseFloat(document.getElementById("taxRate").value) / 100 || 0;
     const superRate = parseFloat(superInput.value) / 100 || 0;
-    const hecsRate = parseFloat(hecsInput.value) / 100 || 0;
+    let hecsRate = 0;
     const startDateVal = document.getElementById("startDate").value;
     const endDateVal = document.getElementById("endDate").value;
     const state = document.getElementById("state").value;
@@ -522,6 +590,21 @@ class PayCalculator {
     if (workingDays < 0) workingDays = 0;
     document.getElementById("workingDays").value = workingDays;
 
+    const fyDate = startDateVal ? new Date(startDateVal) : new Date();
+    const fyStart =
+      fyDate.getMonth() >= 6 ? fyDate.getFullYear() : fyDate.getFullYear() - 1;
+    const fy = `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
+
+    const ftePackage = dailyRate * workingDays;
+    const fteSalary = ftePackage / (1 + superRate);
+    if (hasHecsCheckbox && hasHecsCheckbox.checked) {
+      if (!riTaxableInput.value) riTaxableInput.value = fteSalary.toFixed(2);
+      updateRepaymentIncome(fy);
+      hecsRate = parseFloat(hecsInput.value) / 100 || 0;
+    } else {
+      hecsRate = 0;
+    }
+
     const calc = new PayCalculator(
       dailyRate,
       gstRate,
@@ -572,8 +655,6 @@ class PayCalculator {
     currentRate = baseRate;
     baseWorkingDays = workingDays;
     otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
-    const ftePackage = incomeExGst;
-    const fteSalary = ftePackage / (1 + superRate);
     const fteSuper = ftePackage - fteSalary;
     let fteTax = 0;
     if (startDateVal && endDateVal) {
@@ -631,6 +712,12 @@ class PayCalculator {
       taxRate: document.getElementById("taxRate").value,
       superRate: superInput.value,
       hecsRate: hecsInput.value,
+      hasHecs: hasHecsCheckbox.checked,
+      riTaxable: riTaxableInput.value,
+      riNet: riNetInput.value,
+      riFringe: riFringeInput.value,
+      riSuper: riSuperInput.value,
+      riExempt: riExemptInput.value,
       hoursPerDay: hoursPerDayInput.value,
       invoiceFreq: invoiceFreqSelect.value,
       invoiceDay: invoiceDayInput.value,
@@ -651,6 +738,13 @@ class PayCalculator {
     document.getElementById("taxRate").value = data.taxRate || 30;
     superInput.value = data.superRate || 12;
     hecsInput.value = data.hecsRate || 0;
+    hasHecsCheckbox.checked = !!data.hasHecs;
+    hecsSection.style.display = hasHecsCheckbox.checked ? "" : "none";
+    riTaxableInput.value = data.riTaxable || "";
+    riNetInput.value = data.riNet || 0;
+    riFringeInput.value = data.riFringe || 0;
+    riSuperInput.value = data.riSuper || 0;
+    riExemptInput.value = data.riExempt || 0;
     hoursPerDayInput.value = data.hoursPerDay || 7.2;
     invoiceFreqSelect.value = data.invoiceFreq || "weekly";
     invoiceDayInput.value = data.invoiceDay || 1;
