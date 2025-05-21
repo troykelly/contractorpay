@@ -1,8 +1,8 @@
-# Contractor Pay Estimator
+# Contractor Tools
 
-This repository contains a simple static web application that helps Australian contractors estimate how much of their invoiced income they should set aside for tax and GST.
+This repository contains a suite of utilities for independent contractors. The first tool is the **Contractor Pay Estimator**, a simple web application that helps Australian contractors estimate how much of their invoiced income they should set aside for tax and GST.
 
-The application is completely client side and hosted using GitHub Pages from the [`docs/`](docs/) directory.
+The tools are completely client side and are hosted using GitHub Pages from the [`docs/`](docs/) directory.
 It allows you to input your daily rate, select a date range and state, and it automatically calculates the working days in that period (excluding weekends and public holidays).
 GST is fixed at 10% with an optional **Collect GST** checkbox. Toggle it and adjust approximate tax rates to see how much money you might bank after setting aside tax.
 
@@ -13,3 +13,7 @@ The calculator can generate a share link with your inputs. Click **Copy Share Li
 The code now includes a basic public holiday service. It attempts to retrieve holiday data from the public API at [Nager.Date](https://date.nager.at) and falls back to an internal list if the request fails.
 
 The results page also explains the equivalent full time salary for your entered rate and estimates your total salary package including superannuation. Current Australian tax brackets are fetched from an API when possible (with a local fallback) to estimate annual tax and typical take‑home pay. Your estimated net income is shown per your selected invoice frequency (weekly, fortnightly, monthly or quarterly).
+
+## Design system
+
+All tools share a common design built on [Bootstrap 5](https://getbootstrap.com/). This provides a consistent look and feel and allows additional tools to be added easily in the future.
