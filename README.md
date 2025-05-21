@@ -11,3 +11,5 @@ The calculator can generate a share link with your inputs. Click **Copy Share Li
 > **Disclaimer**: This tool provides an approximate estimation only and does not constitute financial advice. Always seek professional financial advice for your specific circumstances.
 
 The code now includes a basic public holiday service. It attempts to retrieve holiday data from the public API at [Nager.Date](https://date.nager.at) and falls back to an internal list if the request fails.
+
+The results page also explains the equivalent full time salary for your entered rate and estimates your total salary package including superannuation. Current Australian tax brackets are fetched from an API when possible (with a local fallback) to estimate annual tax and typical take‑home pay. Your estimated net income is shown per your selected invoice frequency (weekly, fortnightly, monthly or quarterly).

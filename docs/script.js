@@ -38,6 +38,48 @@ class HolidayService {
     }
 }
 
+class TaxService {
+    static FALLBACK_BRACKETS = {
+        2024: [
+            { threshold: 0, base: 0, rate: 0 },
+            { threshold: 18200, base: 0, rate: 0.19 },
+            { threshold: 45000, base: 5092, rate: 0.325 },
+            { threshold: 120000, base: 29467, rate: 0.37 },
+            { threshold: 180000, base: 51667, rate: 0.45 }
+        ]
+    };
+
+    static cache = {};
+
+    static async fetchBrackets(year) {
+        const resp = await fetch(`https://example.com/tax/${year}.json`);
+        if (!resp.ok) throw new Error('Network response was not ok');
+        return await resp.json();
+    }
+
+    static async getBrackets(year) {
+        if (this.cache[year]) return this.cache[year];
+        try {
+            const data = await this.fetchBrackets(year);
+            this.cache[year] = data;
+        } catch (e) {
+            this.cache[year] = this.FALLBACK_BRACKETS[year] || [];
+        }
+        return this.cache[year];
+    }
+
+    static calcTax(income, brackets) {
+        if (!Array.isArray(brackets)) return 0;
+        for (let i = brackets.length - 1; i >= 0; i--) {
+            const b = brackets[i];
+            if (income > b.threshold) {
+                return b.base + (income - b.threshold) * b.rate;
+            }
+        }
+        return 0;
+    }
+}
+
 class PayCalculator {
     constructor(dailyRate, gstRate, taxRate, superRate, hecsRate) {
         this.dailyRate = dailyRate;
@@ -221,6 +263,23 @@ class PayCalculator {
         parts.push(
             `After putting aside these amounts you will have around $${formatMoney(data.netAmount)} left. This is effectively your take‑home salary for day‑to‑day spending.`
         );
+        if (data.fteSalary) {
+            parts.push(
+                `At this rate your equivalent full‑time salary is about $${formatMoney(data.fteSalary)} per year.`
+            );
+            if (data.superRate > 0) {
+                parts.push(
+                    `Including superannuation, your total package is roughly $${formatMoney(data.ftePackage)} per year.`
+                );
+            }
+            if (data.fteNet && data.perInvoiceNet) {
+                const words = {weekly: 'week', fortnightly: 'fortnight', monthly: 'month', quarterly: 'quarter'};
+                const freqWord = words[data.invoiceFreq] || data.invoiceFreq;
+                parts.push(
+                    `After tax${data.hecsRate>0?' and HECS':''}, take‑home pay is around $${formatMoney(data.fteNet)} per year, or about $${formatMoney(data.perInvoiceNet)} each ${freqWord}.`
+                );
+            }
+        }
         expEl.innerHTML = '<p>' + parts.join('</p><p>') + '</p>';
     }
 
@@ -321,6 +380,18 @@ class PayCalculator {
         currentRate = baseRate;
         baseWorkingDays = workingDays;
         otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
+        const annualDays = 260;
+        const fteSalary = dailyRate * annualDays;
+        const year = startDateVal ? new Date(startDateVal).getFullYear() : new Date().getFullYear();
+        const brackets = await TaxService.getBrackets(year);
+        const fteTax = TaxService.calcTax(fteSalary, brackets);
+        const fteSuper = fteSalary * superRate;
+        const fteHecs = fteSalary * hecsRate;
+        const ftePackage = fteSalary + fteSuper;
+        const fteNet = fteSalary - fteTax - fteSuper - fteHecs;
+        const freqMap = { weekly: 52, fortnightly: 26, monthly: 12, quarterly: 4 };
+        const perInvoiceNet = fteNet / (freqMap[invoiceFreqSelect.value] || 52);
+
         updateRateChangeUI();
         generateExplanation({
             incomeIncGst,
@@ -328,7 +399,14 @@ class PayCalculator {
             taxAmount,
             superAmount,
             hecsAmount,
-            netAmount
+            netAmount,
+            fteSalary,
+            ftePackage,
+            fteNet,
+            perInvoiceNet,
+            invoiceFreq: invoiceFreqSelect.value,
+            superRate,
+            hecsRate
         });
     }
 
