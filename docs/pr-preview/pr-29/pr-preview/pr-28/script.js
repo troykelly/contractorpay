@@ -120,40 +120,25 @@ class HolidayService {
 }
 
 class TaxService {
-  static FALLBACK_BRACKETS = {
-    2024: [
-      { threshold: 0, base: 0, rate: 0 },
-      { threshold: 18200, base: 0, rate: 0.19 },
-      { threshold: 45000, base: 5092, rate: 0.325 },
-      { threshold: 120000, base: 29467, rate: 0.37 },
-      { threshold: 180000, base: 51667, rate: 0.45 },
-    ],
-  };
-
   static cache = {};
 
-  static async fetchBrackets(year) {
-    const resp = await fetch(`https://example.com/tax/${year}.json`);
-    if (!resp.ok) throw new Error("Network response was not ok");
-    return await resp.json();
-  }
-
-  static async getBrackets(year) {
+  static async getBrackets(year, isResident = true) {
     if (this.cache[year]) return this.cache[year];
-    try {
-      const data = await this.fetchBrackets(year);
-      this.cache[year] = data;
-    } catch (e) {
-      this.cache[year] = this.FALLBACK_BRACKETS[year] || [];
-    }
-    return this.cache[year];
+    const fy = `${year}-${String((year + 1) % 100).padStart(2, "0")}`;
+    const data = AusTaxBrackets.getBrackets(fy, isResident).map((b) => ({
+      threshold: b.min,
+      base: b.base,
+      rate: b.rate,
+    }));
+    this.cache[year] = data;
+    return data;
   }
 
   static calcTax(income, brackets) {
     if (!Array.isArray(brackets)) return 0;
     for (let i = brackets.length - 1; i >= 0; i--) {
       const b = brackets[i];
-      if (income > b.threshold) {
+      if (income >= b.threshold) {
         return b.base + (income - b.threshold) * b.rate;
       }
     }
