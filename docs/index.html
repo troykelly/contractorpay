@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Contractor Pay Estimator</h1>
-        <p class="disclaimer">This tool provides an approximate estimation only and is not financial advice. Consult a professional for advice specific to your situation.</p>
+    <div class="container layout">
+        <div class="form-section">
+            <h1>Contractor Pay Estimator</h1>
+            <p class="disclaimer">This tool provides an approximate estimation only and is not financial advice. Consult a professional for advice specific to your situation.</p>
 
         <div class="form-group">
             <label for="rate">Rate (ex GST)</label>
@@ -92,17 +93,40 @@
             <button id="copyLink">Copy Share Link</button>
         </div>
         <div id="error" class="error" hidden></div>
+        </div>
 
-        <div class="results" id="results" hidden>
-            <h2>Results</h2>
-            <p>Total income (ex GST): $<span id="incomeExGst"></span></p>
-            <p>GST to set aside: $<span id="gstAmount"></span></p>
-            <p>Estimated tax to set aside: $<span id="taxAmount"></span></p>
-            <p>Super to set aside: $<span id="superAmount"></span></p>
-            <p>HECS to set aside: $<span id="hecsAmount"></span></p>
-            <p>Total furlough days: <span id="totalFurloughDays"></span></p>
-            <p>Total hours worked: <span id="totalHours"></span></p>
-            <p class="total">Approximate amount to bank: $<span id="netAmount"></span></p>
+        <div class="results-section">
+            <div class="results" id="results" hidden>
+                <h2>Results</h2>
+                <table class="results-table">
+                    <tbody>
+                        <tr><th>Total income (ex GST)</th><td id="incomeExGst"></td></tr>
+                        <tr><th>GST to set aside</th><td id="gstAmount"></td></tr>
+                        <tr><th>Estimated tax to set aside</th><td id="taxAmount"></td></tr>
+                        <tr><th>Super to set aside</th><td id="superAmount"></td></tr>
+                        <tr><th>HECS to set aside</th><td id="hecsAmount"></td></tr>
+                        <tr><th>Total furlough days</th><td id="totalFurloughDays"></td></tr>
+                        <tr><th>Total hours worked</th><td id="totalHours"></td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="total-row"><th>Approximate amount to bank</th><td id="netAmount"></td></tr>
+                    </tfoot>
+                </table>
+                <details id="rateChange" class="rate-change">
+                    <summary>Rate Change Calculator</summary>
+                    <div class="rate-change-controls">
+                        <button type="button" data-inc="-10">-10</button>
+                        <button type="button" data-inc="-5">-5</button>
+                        <button type="button" data-inc="-1">-1</button>
+                        <span id="currentRate"></span>
+                        <button type="button" data-inc="1">+1</button>
+                        <button type="button" data-inc="5">+5</button>
+                        <button type="button" data-inc="10">+10</button>
+                    </div>
+                    <p>New net amount: $<span id="changedNet"></span></p>
+                    <p>Change: <span id="rateChangePercent"></span>%</p>
+                </details>
+            </div>
         </div>
     </div>
 
