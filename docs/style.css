@@ -220,6 +220,22 @@ input[type="number"] {
 .ledger-table td:first-child {
     text-align: left;
 }
+
+.account-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+.account-table th,
+.account-table td {
+    border-bottom: 1px solid #ccc;
+    padding: 6px;
+    text-align: right;
+}
+.account-table th:first-child,
+.account-table td:first-child {
+    text-align: left;
+}
 .close {
     float: right;
     border: none;
