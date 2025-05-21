@@ -1,3 +1,5 @@
+import { AusTaxBrackets } from "./aus_tax_brackets.js";
+
 class HolidayService {
   static FALLBACK_HOLIDAYS = {
     2024: {
@@ -549,11 +551,13 @@ class PayCalculator {
     otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
     const annualDays = 260;
     const fteSalary = dailyRate * annualDays;
-    const year = startDateVal
-      ? new Date(startDateVal).getFullYear()
-      : new Date().getFullYear();
-    const brackets = await TaxService.getBrackets(year);
-    const fteTax = TaxService.calcTax(fteSalary, brackets);
+    const dateForFy = startDateVal ? new Date(startDateVal) : new Date();
+    const fyStart =
+      dateForFy.getMonth() >= 6
+        ? dateForFy.getFullYear()
+        : dateForFy.getFullYear() - 1;
+    const fy = `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
+    const fteTax = AusTaxBrackets.calculateTax(fteSalary, fy);
     const fteSuper = fteSalary * superRate;
     const fteHecs = fteSalary * hecsRate;
     const ftePackage = fteSalary + fteSuper;
