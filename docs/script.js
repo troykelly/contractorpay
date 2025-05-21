@@ -250,6 +250,7 @@ class PayCalculator {
   const riExemptInput = document.getElementById("riExempt");
   const riRow = document.getElementById("riRow");
   const riValue = document.getElementById("riValue");
+  const riSuperNote = document.getElementById("riSuperNote");
   const invoiceFreqSelect = document.getElementById("invoiceFreq");
   const invoiceDayInput = document.getElementById("invoiceDay");
   const invoiceDayGroup = document.getElementById("invoiceDayGroup");
@@ -388,19 +389,29 @@ class PayCalculator {
     if (el) el.addEventListener("input", calculate);
   }
 
-  function updateRepaymentIncome(taxable, fy) {
+  function updateRepaymentIncome(taxable, fy, superRate) {
     if (!hasHecsCheckbox || !hasHecsCheckbox.checked) return 0;
     const net = parseFloat(riNetInput.value) || 0;
     const fringe = parseFloat(riFringeInput.value) || 0;
-    const superc = parseFloat(riSuperInput.value) || 0;
+    const additional = parseFloat(riSuperInput.value) || 0;
+    const included = taxable * superRate;
     const exempt = parseFloat(riExemptInput.value) || 0;
-    const total = taxable + net + fringe + superc + exempt;
+    const total = taxable + net + fringe + included + additional + exempt;
     const rate = AusTaxBrackets.hecsRate(total, fy) * 100;
     if (!hecsInput.dataset.userEdited) {
       hecsInput.value = rate.toFixed(2);
     }
     if (riRow) riRow.style.display = "";
     if (riValue) riValue.textContent = "$" + formatMoney(total);
+    if (riSuperNote) {
+      if (included > 0) {
+        riSuperNote.textContent = `Already includes $${formatMoney(included)}`;
+        riSuperNote.hidden = false;
+      } else {
+        riSuperNote.textContent = "";
+        riSuperNote.hidden = true;
+      }
+    }
     return total;
   }
 
@@ -622,7 +633,7 @@ class PayCalculator {
     const fteSalary = ftePackage / (1 + superRate);
     const taxableIncome = fteSalary;
     if (hasHecsCheckbox && hasHecsCheckbox.checked) {
-      updateRepaymentIncome(taxableIncome, fy);
+      updateRepaymentIncome(taxableIncome, fy, superRate);
       hecsRate = parseFloat(hecsInput.value) / 100 || 0;
     } else {
       hecsRate = 0;
