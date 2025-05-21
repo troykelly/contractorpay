@@ -6,7 +6,7 @@ body {
 }
 
 .container {
-    max-width: 600px;
+    max-width: 1000px;
     margin: 40px auto;
     padding: 20px;
     background: #fff;
@@ -64,6 +64,36 @@ button:hover {
     margin-top: 20px;
 }
 
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table th,
+.results-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ccc;
+}
+
+.results-table td {
+    text-align: right;
+}
+
+.results-table tfoot td {
+    font-weight: bold;
+}
+
+.rate-change {
+    margin-top: 15px;
+}
+
+.rate-change-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin: 10px 0;
+}
+
 .results p {
     margin: 5px 0;
 }
@@ -104,6 +134,18 @@ input[type="number"] {
     border-radius: 4px;
 }
 
+.layout {
+    display: block;
+}
+
+.form-section {
+    flex: 1;
+}
+
+.results-section {
+    flex: 1;
+}
+
 @media (max-width: 600px) {
     .container {
         margin: 20px;
@@ -118,5 +160,15 @@ input[type="number"] {
     }
     .actions button {
         width: 100%;
+    }
+}
+
+@media (min-width: 900px) {
+    .layout {
+        display: flex;
+        gap: 20px;
+    }
+    .results {
+        margin-top: 0;
     }
 }

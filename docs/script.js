@@ -104,6 +104,16 @@ class PayCalculator {
     const hecsInput = document.getElementById('hecsRate');
     let prevRateType = rateTypeSelect.value;
 
+    const currentRateSpan = document.getElementById('currentRate');
+    const changedNetSpan = document.getElementById('changedNet');
+    const rateChangePercentSpan = document.getElementById('rateChangePercent');
+    const rateChangeDiv = document.getElementById('rateChange');
+
+    let baseRate = 0;
+    let currentRate = 0;
+    let baseWorkingDays = 0;
+    let otherRates = {};
+
     function convertRate(value, from, to) {
         if (isNaN(value)) return 0;
         const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
@@ -155,6 +165,21 @@ class PayCalculator {
     function attachAutoCalc(id) {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', calculate);
+    }
+
+    function updateRateChangeUI() {
+        if (!rateChangeDiv) return;
+        currentRateSpan.textContent = '$' + formatMoney(currentRate);
+        const calc = new PayCalculator(currentRate, otherRates.gstRate, otherRates.taxRate, otherRates.superRate, otherRates.hecsRate);
+        const { netAmount } = calc.calculate(baseWorkingDays);
+        changedNetSpan.textContent = '$' + formatMoney(netAmount);
+        const pct = baseRate ? ((currentRate - baseRate) / baseRate) * 100 : 0;
+        rateChangePercentSpan.textContent = pct.toFixed(1);
+    }
+
+    function adjustRate(delta) {
+        currentRate += delta;
+        updateRateChangeUI();
     }
 
     ['rate','gstRate','taxRate','superRate','hecsRate','startDate','endDate','state','holidayDays','hoursPerDay'].forEach(attachAutoCalc);
@@ -218,17 +243,23 @@ class PayCalculator {
         const calc = new PayCalculator(dailyRate, gstRate, taxRate, superRate, hecsRate);
         const { incomeExGst, gstAmount, taxAmount, superAmount, hecsAmount, netAmount } = calc.calculate(workingDays);
 
-        document.getElementById('incomeExGst').textContent = formatMoney(incomeExGst);
-        document.getElementById('gstAmount').textContent = formatMoney(gstAmount);
-        document.getElementById('taxAmount').textContent = formatMoney(taxAmount);
-        document.getElementById('superAmount').textContent = formatMoney(superAmount);
-        document.getElementById('hecsAmount').textContent = formatMoney(hecsAmount);
-        document.getElementById('netAmount').textContent = formatMoney(netAmount);
+        document.getElementById('incomeExGst').textContent = '$' + formatMoney(incomeExGst);
+        document.getElementById('gstAmount').textContent = '$' + formatMoney(gstAmount);
+        document.getElementById('taxAmount').textContent = '$' + formatMoney(taxAmount);
+        document.getElementById('superAmount').textContent = '$' + formatMoney(superAmount);
+        document.getElementById('hecsAmount').textContent = '$' + formatMoney(hecsAmount);
+        document.getElementById('netAmount').textContent = '$' + formatMoney(netAmount);
         document.getElementById('totalFurloughDays').textContent = furloughDays;
         const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
         document.getElementById('totalHours').textContent = formatMoney(workingDays * hoursPerDay);
 
         resultsDiv.hidden = false;
+
+        baseRate = dailyRate;
+        currentRate = dailyRate;
+        baseWorkingDays = workingDays;
+        otherRates = { gstRate, taxRate, superRate, hecsRate };
+        updateRateChangeUI();
     }
 
     function collectFormData() {
@@ -309,5 +340,12 @@ class PayCalculator {
     document.getElementById('calculate').addEventListener('click', calculate);
     const copyBtn = document.getElementById('copyLink');
     if (copyBtn) copyBtn.addEventListener('click', copyShareLink);
+    if (rateChangeDiv) {
+        rateChangeDiv.addEventListener('click', function(e) {
+            if (e.target.dataset && e.target.dataset.inc) {
+                adjustRate(parseFloat(e.target.dataset.inc));
+            }
+        });
+    }
     calculate();
 })();
