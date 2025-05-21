@@ -231,6 +231,83 @@ class PayCalculator {
         resultsDiv.hidden = false;
     }
 
+    function collectFormData() {
+        const periods = [];
+        furloughContainer.querySelectorAll('.furlough-period').forEach(p => {
+            periods.push({
+                start: p.querySelector('.furlough-start').value,
+                end: p.querySelector('.furlough-end').value
+            });
+        });
+        return {
+            rate: rateInput.value,
+            rateType: rateTypeSelect.value,
+            startDate: document.getElementById('startDate').value,
+            endDate: document.getElementById('endDate').value,
+            state: document.getElementById('state').value,
+            holidayDays: holidayInput.value,
+            gstRate: document.getElementById('gstRate').value,
+            taxRate: document.getElementById('taxRate').value,
+            superRate: superInput.value,
+            hecsRate: hecsInput.value,
+            hoursPerDay: hoursPerDayInput.value,
+            furlough: periods
+        };
+    }
+
+    function populateForm(data) {
+        if (!data) return;
+        rateInput.value = data.rate || '';
+        rateTypeSelect.value = data.rateType || 'daily';
+        document.getElementById('startDate').value = data.startDate || '';
+        document.getElementById('endDate').value = data.endDate || '';
+        document.getElementById('state').value = data.state || 'ACT';
+        holidayInput.value = data.holidayDays || 0;
+        document.getElementById('gstRate').value = data.gstRate || 10;
+        document.getElementById('taxRate').value = data.taxRate || 30;
+        superInput.value = data.superRate || 11;
+        hecsInput.value = data.hecsRate || 0;
+        hoursPerDayInput.value = data.hoursPerDay || 7.2;
+        furloughContainer.querySelectorAll('.furlough-period').forEach(p => p.remove());
+        if (Array.isArray(data.furlough)) {
+            data.furlough.forEach(per => {
+                addFurloughRow();
+                const row = furloughContainer.querySelectorAll('.furlough-period');
+                const div = row[row.length - 1];
+                div.querySelector('.furlough-start').value = per.start || '';
+                div.querySelector('.furlough-end').value = per.end || '';
+            });
+        }
+    }
+
+    async function copyShareLink() {
+        await calculate();
+        const data = collectFormData();
+        const encoded = encodeURIComponent(btoa(JSON.stringify(data)));
+        const url = `${location.origin}${location.pathname}?link=${encoded}`;
+        const net = document.getElementById('netAmount').textContent || '0';
+        const text = `I've used a contractor income calculator to calculate approximately $${net} should be banked for the period ${data.startDate} to ${data.endDate} @ $${data.rate}/${data.rateType}. ${url}`;
+        try {
+            await navigator.clipboard.writeText(text);
+            alert('Share link copied to clipboard');
+        } catch (e) {
+            console.error('Clipboard copy failed', e);
+        }
+    }
+
+    const params = new URLSearchParams(location.search);
+    if (params.has('link')) {
+        try {
+            const decoded = JSON.parse(atob(decodeURIComponent(params.get('link'))));
+            populateForm(decoded);
+            calculate();
+        } catch (e) {
+            console.error('Invalid share link', e);
+        }
+    }
+
     document.getElementById('calculate').addEventListener('click', calculate);
+    const copyBtn = document.getElementById('copyLink');
+    if (copyBtn) copyBtn.addEventListener('click', copyShareLink);
     calculate();
 })();
