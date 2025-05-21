@@ -224,12 +224,6 @@
           </div>
           <div id="hecsSection" style="display: none">
             <div class="mb-3">
-              <label for="riTaxable" class="form-label"
-                >Taxable income ($)</label
-              >
-              <input type="number" id="riTaxable" class="form-control" />
-            </div>
-            <div class="mb-3">
               <label for="riNet" class="form-label"
                 >Net investment losses ($)</label
               >
@@ -267,12 +261,6 @@
                 class="form-control"
                 value="0"
               />
-            </div>
-            <div class="mb-3">
-              <label for="riTotal" class="form-label"
-                >Repayment income ($)</label
-              >
-              <input type="number" id="riTotal" class="form-control" readonly />
             </div>
             <div class="mb-3">
               <label for="hecsRate" class="form-label">HECS Rate (%)</label>
@@ -367,6 +355,10 @@
                 <tr>
                   <th>HECS to set aside</th>
                   <td id="hecsAmount"></td>
+                </tr>
+                <tr id="riRow" style="display: none">
+                  <th>Repayment income (RI)</th>
+                  <td id="riValue"></td>
                 </tr>
                 <tr>
                   <th>Total furlough days</th>

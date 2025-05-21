@@ -244,12 +244,12 @@ class PayCalculator {
   const hecsInput = document.getElementById("hecsRate");
   const hasHecsCheckbox = document.getElementById("hasHecs");
   const hecsSection = document.getElementById("hecsSection");
-  const riTaxableInput = document.getElementById("riTaxable");
   const riNetInput = document.getElementById("riNet");
   const riFringeInput = document.getElementById("riFringe");
   const riSuperInput = document.getElementById("riSuper");
   const riExemptInput = document.getElementById("riExempt");
-  const riTotalInput = document.getElementById("riTotal");
+  const riRow = document.getElementById("riRow");
+  const riValue = document.getElementById("riValue");
   const invoiceFreqSelect = document.getElementById("invoiceFreq");
   const invoiceDayInput = document.getElementById("invoiceDay");
   const invoiceDayGroup = document.getElementById("invoiceDayGroup");
@@ -364,19 +364,19 @@ class PayCalculator {
     if (el) el.addEventListener("input", calculate);
   }
 
-  function updateRepaymentIncome(fy) {
+  function updateRepaymentIncome(taxable, fy) {
     if (!hasHecsCheckbox || !hasHecsCheckbox.checked) return 0;
-    const taxable = parseFloat(riTaxableInput.value) || 0;
     const net = parseFloat(riNetInput.value) || 0;
     const fringe = parseFloat(riFringeInput.value) || 0;
     const superc = parseFloat(riSuperInput.value) || 0;
     const exempt = parseFloat(riExemptInput.value) || 0;
     const total = taxable + net + fringe + superc + exempt;
-    riTotalInput.value = total.toFixed(2);
     const rate = AusTaxBrackets.hecsRate(total, fy) * 100;
     if (!hecsInput.dataset.userEdited) {
       hecsInput.value = rate.toFixed(2);
     }
+    if (riRow) riRow.style.display = "";
+    if (riValue) riValue.textContent = "$" + formatMoney(total);
     return total;
   }
 
@@ -516,7 +516,6 @@ class PayCalculator {
     "superRate",
     "hecsRate",
     "hasHecs",
-    "riTaxable",
     "riNet",
     "riFringe",
     "riSuper",
@@ -597,12 +596,13 @@ class PayCalculator {
 
     const ftePackage = dailyRate * workingDays;
     const fteSalary = ftePackage / (1 + superRate);
+    const taxableIncome = fteSalary;
     if (hasHecsCheckbox && hasHecsCheckbox.checked) {
-      if (!riTaxableInput.value) riTaxableInput.value = fteSalary.toFixed(2);
-      updateRepaymentIncome(fy);
+      updateRepaymentIncome(taxableIncome, fy);
       hecsRate = parseFloat(hecsInput.value) / 100 || 0;
     } else {
       hecsRate = 0;
+      if (riRow) riRow.style.display = "none";
     }
 
     const calc = new PayCalculator(
@@ -713,7 +713,6 @@ class PayCalculator {
       superRate: superInput.value,
       hecsRate: hecsInput.value,
       hasHecs: hasHecsCheckbox.checked,
-      riTaxable: riTaxableInput.value,
       riNet: riNetInput.value,
       riFringe: riFringeInput.value,
       riSuper: riSuperInput.value,
@@ -740,7 +739,6 @@ class PayCalculator {
     hecsInput.value = data.hecsRate || 0;
     hasHecsCheckbox.checked = !!data.hasHecs;
     hecsSection.style.display = hasHecsCheckbox.checked ? "" : "none";
-    riTaxableInput.value = data.riTaxable || "";
     riNetInput.value = data.riNet || 0;
     riFringeInput.value = data.riFringe || 0;
     riSuperInput.value = data.riSuper || 0;
