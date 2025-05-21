@@ -262,6 +262,18 @@ class PayCalculator {
   const hecsRateInfoModal = document.getElementById("hecsRateInfoModal");
   const hecsRateInfoBtn = document.getElementById("hecsRateInfoBtn");
   const closeHecsRateInfoBtn = document.getElementById("closeHecsRateInfo");
+  const sgInfoModal = document.getElementById("sgInfoModal");
+  const sgInfoBtn = document.getElementById("sgInfoBtn");
+  const closeSgInfoBtn = document.getElementById("closeSgInfo");
+  const wcInfoModal = document.getElementById("wcInfoModal");
+  const wcInfoBtn = document.getElementById("wcInfoBtn");
+  const closeWcInfoBtn = document.getElementById("closeWcInfo");
+  const leaveInfoModal = document.getElementById("leaveInfoModal");
+  const leaveInfoBtn = document.getElementById("leaveInfoBtn");
+  const closeLeaveInfoBtn = document.getElementById("closeLeaveInfo");
+  const payrollInfoModal = document.getElementById("payrollInfoModal");
+  const payrollInfoBtn = document.getElementById("payrollInfoBtn");
+  const closePayrollInfoBtn = document.getElementById("closePayrollInfo");
   if (ledgerModal) ledgerModal.hidden = true;
   if (hecsInfoModal) hecsInfoModal.hidden = true;
   if (riNetInfoModal) riNetInfoModal.hidden = true;
@@ -269,6 +281,10 @@ class PayCalculator {
   if (riSuperInfoModal) riSuperInfoModal.hidden = true;
   if (riExemptInfoModal) riExemptInfoModal.hidden = true;
   if (hecsRateInfoModal) hecsRateInfoModal.hidden = true;
+  if (sgInfoModal) sgInfoModal.hidden = true;
+  if (wcInfoModal) wcInfoModal.hidden = true;
+  if (leaveInfoModal) leaveInfoModal.hidden = true;
+  if (payrollInfoModal) payrollInfoModal.hidden = true;
   let prevRateType = rateTypeSelect.value;
 
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
@@ -511,6 +527,27 @@ class PayCalculator {
           ann.push(`<p>${label} about $${formatMoney(data.fteNet / div)}</p>`);
         }
       }
+      const consts = FteConversion.getConstants();
+      const sg = consts.SG_RATE;
+      const wc = consts.WORKCOVER_RATE;
+      const ll = consts.LEAVE_LOADING_RATE;
+      const pt = (consts.PAYROLL_TAX_RATES || {})[data.state] || 0;
+      const wcAmt = data.fteSalary * wc;
+      const llAmt = data.fteSalary * ll;
+      const superAmt = data.fteSuper;
+      const ptAmt = (data.fteSalary + llAmt + superAmt) * pt;
+      const working = [
+        '<details class="fte-working"><summary>Show Working</summary>',
+        '<table class="ledger-table">',
+        `<tr><th>Annual invoices</th><td>$${formatMoney(data.fteAnnualised)}</td></tr>`,
+        `<tr><th>Workers\u2019 compensation <button type=\"button\" id=\"wcInfoBtn\" class=\"btn btn-link p-0 info-btn\" aria-label=\"Workers compensation info\">\u24D8</button></th><td>$${formatMoney(wcAmt)}</td></tr>`,
+        `<tr><th>Leave loading <button type=\"button\" id=\"leaveInfoBtn\" class=\"btn btn-link p-0 info-btn\" aria-label=\"Leave loading info\">\u24D8</button></th><td>$${formatMoney(llAmt)}</td></tr>`,
+        `<tr><th>Payroll tax <button type=\"button\" id=\"payrollInfoBtn\" class=\"btn btn-link p-0 info-btn\" aria-label=\"Payroll tax info\">\u24D8</button></th><td>$${formatMoney(ptAmt)}</td></tr>`,
+        `<tr><th>Base salary</th><td>$${formatMoney(data.fteSalary)}</td></tr>`,
+        `<tr><th>Superannuation <button type=\"button\" id=\"sgInfoBtn\" class=\"btn btn-link p-0 info-btn\" aria-label=\"Super info\">\u24D8</button></th><td>$${formatMoney(superAmt)}</td></tr>`,
+        `<tr><th>Total package</th><td>$${formatMoney(data.ftePackage)}</td></tr>`,
+        "</table></details>",
+      ];
       ann.push(
         `<div class="fte-explainer"><p>Your invoice rate covers costs an employer normally pays on top of salary, including superannuation, payroll tax, workers' compensation and paid leave. For this reason, a contract rate doesn't convert 1:1 into a permanent package.</p><p>Charging $${formatMoney(
           data.rate,
@@ -523,7 +560,7 @@ class PayCalculator {
       sections.push(
         `<section class="explanation-section annual"><h3>📈 Full‑Time Equivalent</h3>${ann.join(
           "",
-        )}</section>`,
+        )}${working.join("")}</section>`,
       );
     }
 
@@ -726,12 +763,14 @@ class PayCalculator {
       ftePackage,
       fteAnnualised,
       fteMultiplier,
+      fteSuper,
       fteTax,
       fteHecs,
       fteNet,
       invoiceFreq: invoiceFreqSelect.value,
       superRate,
       hecsRate,
+      state,
       rate,
       rateType: rateTypeSelect.value,
     });
@@ -1203,6 +1242,50 @@ class PayCalculator {
   if (hecsRateInfoModal)
     hecsRateInfoModal.addEventListener("click", (e) => {
       if (e.target === hecsRateInfoModal) hecsRateInfoModal.hidden = true;
+    });
+  if (sgInfoBtn)
+    sgInfoBtn.addEventListener("click", () => (sgInfoModal.hidden = false));
+  if (closeSgInfoBtn)
+    closeSgInfoBtn.addEventListener("click", () => (sgInfoModal.hidden = true));
+  if (sgInfoModal)
+    sgInfoModal.addEventListener("click", (e) => {
+      if (e.target === sgInfoModal) sgInfoModal.hidden = true;
+    });
+  if (wcInfoBtn)
+    wcInfoBtn.addEventListener("click", () => (wcInfoModal.hidden = false));
+  if (closeWcInfoBtn)
+    closeWcInfoBtn.addEventListener("click", () => (wcInfoModal.hidden = true));
+  if (wcInfoModal)
+    wcInfoModal.addEventListener("click", (e) => {
+      if (e.target === wcInfoModal) wcInfoModal.hidden = true;
+    });
+  if (leaveInfoBtn)
+    leaveInfoBtn.addEventListener(
+      "click",
+      () => (leaveInfoModal.hidden = false),
+    );
+  if (closeLeaveInfoBtn)
+    closeLeaveInfoBtn.addEventListener(
+      "click",
+      () => (leaveInfoModal.hidden = true),
+    );
+  if (leaveInfoModal)
+    leaveInfoModal.addEventListener("click", (e) => {
+      if (e.target === leaveInfoModal) leaveInfoModal.hidden = true;
+    });
+  if (payrollInfoBtn)
+    payrollInfoBtn.addEventListener(
+      "click",
+      () => (payrollInfoModal.hidden = false),
+    );
+  if (closePayrollInfoBtn)
+    closePayrollInfoBtn.addEventListener(
+      "click",
+      () => (payrollInfoModal.hidden = true),
+    );
+  if (payrollInfoModal)
+    payrollInfoModal.addEventListener("click", (e) => {
+      if (e.target === payrollInfoModal) payrollInfoModal.hidden = true;
     });
   if (rateChangeDiv) {
     rateChangeDiv.addEventListener("click", function (e) {
