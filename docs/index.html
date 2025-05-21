@@ -216,16 +216,63 @@
               title="Superannuation percentage, default 12%"
             />
           </div>
-          <div class="mb-3">
-            <label for="hecsRate" class="form-label">HECS Rate (%)</label>
-            <input
-              type="number"
-              id="hecsRate"
-              class="form-control"
-              value="0"
-              data-bs-toggle="tooltip"
-              title="Extra percentage to repay HECS/HELP debts"
-            />
+          <div class="form-check mb-3">
+            <input type="checkbox" id="hasHecs" class="form-check-input" />
+            <label class="form-check-label" for="hasHecs"
+              >I have a HECS/HELP debt</label
+            >
+          </div>
+          <div id="hecsSection" style="display: none">
+            <div class="mb-3">
+              <label for="riNet" class="form-label"
+                >Net investment losses ($)</label
+              >
+              <input type="number" id="riNet" class="form-control" value="0" />
+            </div>
+            <div class="mb-3">
+              <label for="riFringe" class="form-label"
+                >Reportable fringe benefits ($)</label
+              >
+              <input
+                type="number"
+                id="riFringe"
+                class="form-control"
+                value="0"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="riSuper" class="form-label"
+                >Reportable super contributions ($)</label
+              >
+              <input
+                type="number"
+                id="riSuper"
+                class="form-control"
+                value="0"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="riExempt" class="form-label"
+                >Exempt foreign employment income ($)</label
+              >
+              <input
+                type="number"
+                id="riExempt"
+                class="form-control"
+                value="0"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="hecsRate" class="form-label">HECS Rate (%)</label>
+              <input
+                type="number"
+                id="hecsRate"
+                class="form-control"
+                value="0"
+                data-bs-toggle="tooltip"
+                title="Extra percentage to repay HECS/HELP debts"
+              />
+            </div>
           </div>
 
           <div class="mb-3">
@@ -308,6 +355,10 @@
                 <tr>
                   <th>HECS to set aside</th>
                   <td id="hecsAmount"></td>
+                </tr>
+                <tr id="riRow" style="display: none">
+                  <th>Repayment income (RI)</th>
+                  <td id="riValue"></td>
                 </tr>
                 <tr>
                   <th>Total furlough days</th>
