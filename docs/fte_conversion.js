@@ -14,6 +14,8 @@
 
 /* eslint-disable max-len */
 
+import { AusTaxBrackets } from "./aus_tax_brackets.js";
+
 export class FteConversion {
   // ---------------------------------------------------------------------------
   // CONSTANTS -- editable in one place.
@@ -44,7 +46,7 @@ export class FteConversion {
     WORKCOVER_RATE: 0.016,
 
     /** 17.5 % leave loading applied to 4 weeks’ annual leave. */
-    LEAVE_LOADING_RATE: 0.175 * 4 / 52, // ≈ 0.01346
+    LEAVE_LOADING_RATE: (0.175 * 4) / 52, // ≈ 0.01346
 
     /** Chargeable days per year for a permanent employee. */
     CHARGEABLE_DAYS: 220,
@@ -52,7 +54,7 @@ export class FteConversion {
     /** Standard full-time hours per day (used for hourly-rate conversions). */
     STD_HOURS_PER_DAY: 7.6,
 
-    GST_RATE: 0.10,
+    GST_RATE: 0.1,
   };
 
   // ---------------------------------------------------------------------------
@@ -78,12 +80,15 @@ export class FteConversion {
     }
     if (typeof FteConversion.#CONST[key] !== typeof value) {
       throw new TypeError(
-          `Type mismatch for ${key}: expected ` +
-          typeof FteConversion.#CONST[key]);
+        `Type mismatch for ${key}: expected ` +
+          typeof FteConversion.#CONST[key],
+      );
     }
     // eslint-disable-next-line no-console
-    console.info(`FteConversion constant ${key} changed from ` +
-                 `${FteConversion.#CONST[key]} → ${value}`);
+    console.info(
+      `FteConversion constant ${key} changed from ` +
+        `${FteConversion.#CONST[key]} → ${value}`,
+    );
     // @ts-ignore – private OK here
     FteConversion.#CONST[key] = value;
   }
@@ -94,8 +99,8 @@ export class FteConversion {
    * @param {number} rate   Fraction e.g. 0.0545 for 5.45 %.
    */
   static setPayrollTaxRate(state, rate) {
-    if (typeof rate !== 'number' || rate < 0 || rate > 0.2) {
-      throw new RangeError('Payroll-tax rate should be a fraction 0–0.20.');
+    if (typeof rate !== "number" || rate < 0 || rate > 0.2) {
+      throw new RangeError("Payroll-tax rate should be a fraction 0–0.20.");
     }
     FteConversion.#CONST.PAYROLL_TAX_RATES[state] = rate;
   }
@@ -149,12 +154,12 @@ export class FteConversion {
     const start = FteConversion.#toDate(input.startDate);
     const end = FteConversion.#toDate(input.endDate);
     if (end < start) {
-      throw new RangeError('endDate must be ≥ startDate');
+      throw new RangeError("endDate must be ≥ startDate");
     }
     const effectiveDays =
-        input.workingDays - input.holidayDays - input.furloughDays;
+      input.workingDays - input.holidayDays - input.furloughDays;
     if (effectiveDays <= 0) {
-      throw new RangeError('No chargeable contractor days in the period.');
+      throw new RangeError("No chargeable contractor days in the period.");
     }
 
     // -------- Step 1 – contractor revenue for period -------------------------
@@ -168,16 +173,15 @@ export class FteConversion {
 
     // -------- Step 2 – annualise to a full year ------------------------------
     const annualisedContractorCost =
-        grossContractorExGst *
-        (FteConversion.#CONST.CHARGEABLE_DAYS / effectiveDays);
+      grossContractorExGst *
+      (FteConversion.#CONST.CHARGEABLE_DAYS / effectiveDays);
 
     // -------- Step 3 – employer on-cost multiplier ---------------------------
     const sg = FteConversion.#CONST.SG_RATE;
     const wc = FteConversion.#CONST.WORKCOVER_RATE;
     const ll = FteConversion.#CONST.LEAVE_LOADING_RATE;
     const pt = FteConversion.#payrollTaxRateFor(input.state);
-    const multiplier =
-        1 + sg + wc + ll + pt * (1 + sg + ll);  // derives from doc formula
+    const multiplier = 1 + sg + wc + ll + pt * (1 + sg + ll); // derives from doc formula
 
     const baseSalary = annualisedContractorCost / multiplier;
     const superAmount = baseSalary * sg;
@@ -194,14 +198,13 @@ export class FteConversion {
     };
 
     // -------- Optional tax illustrations ------------------------------------
-    if (includeTax && typeof AusTaxBrackets !== 'undefined') {
+    if (includeTax && typeof AusTaxBrackets !== "undefined") {
       const fy = FteConversion.#dateToFy(start);
       const payg = AusTaxBrackets.calculateTax(baseSalary, fy, true);
       const medicare = baseSalary * 0.02;
       result.payg = FteConversion.#round(payg);
       result.medicare = FteConversion.#round(medicare);
-      result.netTakeHome =
-          FteConversion.#round(baseSalary - payg - medicare);
+      result.netTakeHome = FteConversion.#round(baseSalary - payg - medicare);
     }
 
     return result;
@@ -233,8 +236,8 @@ export class FteConversion {
    */
   static #dateToFy(d) {
     const y = d.getFullYear();
-    const fyStart = d.getMonth() >= 6 ? y : y - 1;  // 1 Jul cutoff
-    return `${fyStart}-${String((fyStart + 1) % 100).padStart(2, '0')}`;
+    const fyStart = d.getMonth() >= 6 ? y : y - 1; // 1 Jul cutoff
+    return `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
   }
 
   /** Rounds to cents (or custom decimals). */
@@ -268,17 +271,17 @@ export class FteConversion {
  *
  * ---------------------------------------------------------------------------
  * LIGHT SMOKE-TEST – runs when file executed standalone                 */
-if (import.meta.url.endsWith('fte_conversion.js')) {
+if (import.meta.url.endsWith("fte_conversion.js")) {
   const demo = {
     rate: 800,
-    rateType: 'daily',
-    startDate: '2025-07-01',
-    endDate: '2025-12-31',
+    rateType: "daily",
+    startDate: "2025-07-01",
+    endDate: "2025-12-31",
     workingDays: 92,
     holidayDays: 0,
     furloughDays: 0,
     hoursPerDay: 7.6,
-    state: 'NSW',
+    state: "NSW",
   };
   // eslint-disable-next-line no-console
   console.table(FteConversion.convert(demo, false));
