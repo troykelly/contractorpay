@@ -1,4 +1,5 @@
 import { AusTaxBrackets } from "./aus_tax_brackets.js";
+import { FteConversion } from "./fte_conversion.js";
 
 class HolidayService {
   static FALLBACK_HOLIDAYS = {
@@ -510,6 +511,15 @@ class PayCalculator {
           ann.push(`<p>${label} about $${formatMoney(data.fteNet / div)}</p>`);
         }
       }
+      ann.push(
+        `<div class="fte-explainer"><p>Your invoice rate covers costs an employer normally pays on top of salary, including superannuation, payroll tax, workers' compensation and paid leave. For this reason, a contract rate doesn't convert 1:1 into a permanent package.</p><p>Charging $${formatMoney(
+          data.rate,
+        )} per ${data.rateType} all year invoices about $${formatMoney(
+          data.fteAnnualised,
+        )}, which our formula converts to a salary package around $${formatMoney(
+          data.ftePackage,
+        )}.</p></div>`,
+      );
       sections.push(
         `<section class="explanation-section annual"><h3>📈 Full‑Time Equivalent</h3>${ann.join(
           "",
@@ -615,8 +625,34 @@ class PayCalculator {
       fyDate.getMonth() >= 6 ? fyDate.getFullYear() : fyDate.getFullYear() - 1;
     const fy = `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
 
-    const ftePackage = dailyRate * workingDays;
-    const fteSalary = ftePackage / (1 + superRate);
+    const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
+    let fteSalary = 0;
+    let ftePackage = 0;
+    let fteAnnualised = 0;
+    let fteMultiplier = 0;
+    let fteSuper = 0;
+    let fteTax = 0;
+    if (startDateVal && endDateVal && workingDays > 0) {
+      const fteInput = {
+        rate: rate,
+        rateType: rateTypeSelect.value,
+        startDate: startDateVal,
+        endDate: endDateVal,
+        workingDays:
+          workingDays + (parseInt(holidayInput.value) || 0) + furloughDays,
+        holidayDays: parseInt(holidayInput.value) || 0,
+        furloughDays,
+        hoursPerDay,
+        state,
+      };
+      const res = FteConversion.convert(fteInput, true);
+      fteSalary = res.baseSalary;
+      ftePackage = res.totalPackage;
+      fteAnnualised = res.annualisedContractorCost;
+      fteMultiplier = res.multiplier;
+      fteSuper = res.superAmount;
+      fteTax = (res.payg || 0) + (res.medicare || 0);
+    }
     const taxableIncome = fteSalary;
     if (hasHecsCheckbox && hasHecsCheckbox.checked) {
       updateRepaymentIncome(taxableIncome, fy, superRate);
@@ -663,7 +699,6 @@ class PayCalculator {
     document.getElementById("netAmount").textContent =
       "$" + formatMoney(netAmount);
     document.getElementById("totalFurloughDays").textContent = furloughDays;
-    const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
     document.getElementById("totalHours").textContent = formatMoney(
       workingDays * hoursPerDay,
     );
@@ -676,23 +711,6 @@ class PayCalculator {
     currentRate = baseRate;
     baseWorkingDays = workingDays;
     otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
-    const fteSuper = ftePackage - fteSalary;
-    let fteTax = 0;
-    if (startDateVal && endDateVal) {
-      fteTax = AusTaxBrackets.calculateTaxForPeriod(
-        startDateVal,
-        endDateVal,
-        fteSalary,
-      );
-    } else {
-      const dateForFy = startDateVal ? new Date(startDateVal) : new Date();
-      const fyStart =
-        dateForFy.getMonth() >= 6
-          ? dateForFy.getFullYear()
-          : dateForFy.getFullYear() - 1;
-      const fy = `${fyStart}-${String((fyStart + 1) % 100).padStart(2, "0")}`;
-      fteTax = AusTaxBrackets.calculateTax(fteSalary, fy);
-    }
     const fteHecs = fteSalary * hecsRate;
     const fteNet = fteSalary - fteTax - fteHecs;
 
@@ -706,12 +724,16 @@ class PayCalculator {
       netAmount,
       fteSalary,
       ftePackage,
+      fteAnnualised,
+      fteMultiplier,
       fteTax,
       fteHecs,
       fteNet,
       invoiceFreq: invoiceFreqSelect.value,
       superRate,
       hecsRate,
+      rate,
+      rateType: rateTypeSelect.value,
     });
   }
 
