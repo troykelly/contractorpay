@@ -7,7 +7,8 @@ This repository hosts a static website for a contractor pay estimator. The proje
 Ignore all files in `docs/pr-preview/**` - these are copies of the application used for PR testing. They are old and must be ignored.
 
 ## Formatting
-- Use two spaces for indentation and keep lines under 120 characters when possible.
+- Follow the Google JavaScript Style Guide.
+- Ensure full documentation and typing.
 - When you modify any `docs/*.js`, `docs/*.css` or `docs/*.html` files, run the following command on the files you changed:
   ```
   npx prettier --check <files>
