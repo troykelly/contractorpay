@@ -156,13 +156,14 @@ class PayCalculator {
     this.hecsRate = hecsRate;
   }
 
-  calculate(workingDays) {
+  calculate(workingDays, repaymentIncome = null) {
     const incomeExGst = this.dailyRate * workingDays;
+    if (repaymentIncome === null) repaymentIncome = incomeExGst;
     const gstAmount = incomeExGst * this.gstRate;
     const incomeIncGst = incomeExGst + gstAmount;
     const taxAmount = incomeExGst * this.taxRate;
     const superAmount = incomeExGst * this.superRate;
-    const hecsAmount = incomeExGst * this.hecsRate;
+    const hecsAmount = repaymentIncome * this.hecsRate;
     const netAmount = incomeExGst - taxAmount - superAmount - hecsAmount;
     return {
       incomeExGst,
@@ -391,24 +392,30 @@ class PayCalculator {
     if (el) el.addEventListener("input", calculate);
   }
 
-  function updateRepaymentIncome(taxable, fy, superRate) {
+  function calcRepaymentIncome(taxable) {
     if (!hasHecsCheckbox || !hasHecsCheckbox.checked) return 0;
     const net = parseFloat(riNetInput.value) || 0;
     const fringe = parseFloat(riFringeInput.value) || 0;
     const additional = parseFloat(riSuperInput.value) || 0;
-    const included = taxable * superRate;
     const exempt = parseFloat(riExemptInput.value) || 0;
-    const total = taxable + net + fringe + included + additional + exempt;
-    const rate = AusTaxBrackets.hecsRate(total, fy) * 100;
-    if (!hecsInput.dataset.userEdited) {
-      hecsInput.value = rate.toFixed(2);
+    return taxable + net + fringe + additional + exempt;
+  }
+
+  function updateRepaymentIncome(taxable, fy, superRate, setRate = true) {
+    if (!hasHecsCheckbox || !hasHecsCheckbox.checked) return 0;
+    const total = calcRepaymentIncome(taxable);
+    if (setRate) {
+      const rate = AusTaxBrackets.hecsRate(total, fy) * 100;
+      if (!hecsInput.dataset.userEdited) {
+        hecsInput.value = rate.toFixed(2);
+      }
     }
     if (riRow) riRow.style.display = "";
     if (riValue) riValue.textContent = "$" + formatMoney(total);
     if (riSuperNote) {
-      const displayAmount = included * (1 + superRate);
-      if (displayAmount > 0) {
-        riSuperNote.textContent = `Repayment income already includes $${formatMoney(displayAmount)} from employer super`;
+      if (superRate > 0) {
+        riSuperNote.textContent =
+          "Employer super contributions are not included in repayment income.";
         riSuperNote.hidden = false;
       } else {
         riSuperNote.textContent = "";
@@ -427,6 +434,7 @@ class PayCalculator {
       "daily",
       baseHoursPerDay,
     );
+    const ri = calcRepaymentIncome(daily * baseWorkingDays);
     const calc = new PayCalculator(
       daily,
       otherRates.collectGst ? 0.1 : 0,
@@ -434,7 +442,7 @@ class PayCalculator {
       otherRates.superRate,
       otherRates.hecsRate,
     );
-    const { netAmount } = calc.calculate(baseWorkingDays);
+    const { netAmount } = calc.calculate(baseWorkingDays, ri);
     changedNetSpan.textContent = formatMoney(netAmount);
     const pct = baseRate ? ((currentRate - baseRate) / baseRate) * 100 : 0;
     rateChangePercentSpan.textContent = pct.toFixed(1);
@@ -690,13 +698,20 @@ class PayCalculator {
       fteSuper = res.superAmount;
       fteTax = (res.payg || 0) + (res.medicare || 0);
     }
-    const taxableIncome = fteSalary;
+    const taxableIncome = ftePackage;
+    let fteRi = 0;
     if (hasHecsCheckbox && hasHecsCheckbox.checked) {
-      updateRepaymentIncome(taxableIncome, fy, superRate);
+      fteRi = updateRepaymentIncome(taxableIncome, fy, superRate);
       hecsRate = parseFloat(hecsInput.value) / 100 || 0;
     } else {
       hecsRate = 0;
       if (riRow) riRow.style.display = "none";
+    }
+
+    const periodIncome = dailyRate * workingDays;
+    const periodRi = calcRepaymentIncome(periodIncome);
+    if (hasHecsCheckbox && hasHecsCheckbox.checked) {
+      updateRepaymentIncome(periodIncome, fy, superRate, false);
     }
 
     const calc = new PayCalculator(
@@ -714,7 +729,7 @@ class PayCalculator {
       superAmount,
       hecsAmount,
       netAmount,
-    } = calc.calculate(workingDays);
+    } = calc.calculate(workingDays, periodRi);
 
     const incomeLabelEl = document.getElementById("incomeLabel");
     const incomeTotalEl = document.getElementById("incomeTotal");
@@ -748,7 +763,7 @@ class PayCalculator {
     currentRate = baseRate;
     baseWorkingDays = workingDays;
     otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
-    const fteHecs = fteSalary * hecsRate;
+    const fteHecs = fteRi * hecsRate;
     const fteNet = fteSalary - fteTax - fteHecs;
 
     updateRateChangeUI();
@@ -869,7 +884,8 @@ class PayCalculator {
       superRate,
       hecsRate,
     );
-    const totals = calc.calculate(baseWorkingDays);
+    const totalsRi = calcRepaymentIncome(dailyRate * baseWorkingDays);
+    const totals = calc.calculate(baseWorkingDays, totalsRi);
 
     let currentStart = new Date(
       startDate.getFullYear(),
@@ -900,7 +916,8 @@ class PayCalculator {
         new Date(currentStart.getFullYear(), currentStart.getMonth() + 1, 0),
         state,
       );
-      const result = calc.calculate(workingDays);
+      const ri = calcRepaymentIncome(dailyRate * workingDays);
+      const result = calc.calculate(workingDays, ri);
       const invoiceDate = new Date(
         currentStart.getFullYear(),
         currentStart.getMonth(),
