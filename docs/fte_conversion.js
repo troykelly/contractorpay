@@ -263,7 +263,7 @@ export class FteConversion {
  *   state: document.querySelector('#state').value,
  * };
  *
- * const out = FteConversion.convert(input, /* includeTax = */ true);
+ * const out = FteConversion.convert(input, # includeTax = # true);
  * console.log(out);
  *
  * ---------------------------------------------------------------------------
