@@ -405,7 +405,9 @@ class PayCalculator {
     if (riValue) riValue.textContent = "$" + formatMoney(total);
     if (riSuperNote) {
       if (included > 0) {
-        riSuperNote.textContent = `Already includes $${formatMoney(included)}`;
+        riSuperNote.textContent = `Repayment income already includes $${formatMoney(
+          included,
+        )} from employer super`;
         riSuperNote.hidden = false;
       } else {
         riSuperNote.textContent = "";
@@ -504,7 +506,7 @@ class PayCalculator {
           data.fteTax,
         )} (assumes first employer & includes Medicare levy)</p>`,
       );
-      if (data.hecsRate > 0) {
+      if (data.hecsRate > 0 && Number.isFinite(data.fteHecs)) {
         ann.push(`<p>Less HECS/HELP about $${formatMoney(data.fteHecs)}</p>`);
       }
       ann.push(
@@ -721,6 +723,7 @@ class PayCalculator {
       fteSalary,
       ftePackage,
       fteTax,
+      fteHecs,
       fteNet,
       invoiceFreq: invoiceFreqSelect.value,
       superRate,
