@@ -115,6 +115,7 @@ class PayCalculator {
     const ledgerSuper = document.getElementById('ledgerSuper');
     const ledgerHecs = document.getElementById('ledgerHecs');
     const ledgerNet = document.getElementById('ledgerNet');
+    const ledgerAccountsDiv = document.getElementById('ledgerAccounts');
     const closeLedgerFooterBtn = document.getElementById('closeLedgerFooter');
     if (ledgerModal) ledgerModal.hidden = true;
     let prevRateType = rateTypeSelect.value;
@@ -431,6 +432,96 @@ class PayCalculator {
         ledgerSuper.textContent = formatMoney(totals.superAmount);
         ledgerHecs.textContent = formatMoney(totals.hecsAmount);
         ledgerNet.textContent = formatMoney(totals.netAmount);
+
+        // Build account ledgers
+        if (ledgerAccountsDiv) ledgerAccountsDiv.innerHTML = '';
+        const accounts = {
+            'Accounts Receivable': [],
+            'Income (Sales)': [],
+            'GST Liability': [],
+            'Super Liability': [],
+            'HECS Liability': [],
+            'Income Tax Liability': [],
+            'Bank Account': []
+        };
+
+        let superAccrued = 0;
+        let hecsAccrued = 0;
+        currentStart = new Date(startDate);
+        if (freq === 'monthly' || freq === 'quarterly') {
+            currentStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            if (currentStart < startDate) {
+                currentStart.setMonth(currentStart.getMonth() + 1);
+            }
+        }
+
+
+        currentStart = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        const periods = [];
+        while (currentStart <= endDate) {
+            const workingDays = await PayCalculator.countWorkingDays(
+                new Date(currentStart),
+                new Date(currentStart.getFullYear(), currentStart.getMonth() + 1, 0),
+                state
+            );
+            const result = calc.calculate(workingDays);
+            const invoiceDate = new Date(currentStart.getFullYear(), currentStart.getMonth(), 1);
+            const paymentDate = new Date(currentStart.getFullYear(), currentStart.getMonth(), 15);
+            const gstPayDate = new Date(currentStart.getFullYear(), currentStart.getMonth(), 21);
+            const accrueDate = new Date(currentStart.getFullYear(), currentStart.getMonth(), 20);
+
+            accounts['Accounts Receivable'].push({date: invoiceDate, desc: 'Invoice to Client (Incl. GST)', debit: result.incomeIncGst, credit: 0});
+            accounts['Accounts Receivable'].push({date: paymentDate, desc: 'Payment Received', debit: 0, credit: result.incomeIncGst});
+
+            accounts['Income (Sales)'].push({date: invoiceDate, desc: 'Sales Income (Excl. GST)', debit: 0, credit: result.incomeExGst});
+
+            accounts['GST Liability'].push({date: invoiceDate, desc: 'GST Collected', debit: 0, credit: result.gstAmount});
+            accounts['GST Liability'].push({date: gstPayDate, desc: 'GST Payment to ATO', debit: result.gstAmount, credit: 0});
+
+            accounts['Bank Account'].push({date: paymentDate, desc: 'Payment Received from Client', debit: result.incomeIncGst, credit: 0});
+            accounts['Bank Account'].push({date: gstPayDate, desc: 'GST Payment', debit: 0, credit: result.gstAmount});
+
+            accounts['Super Liability'].push({date: accrueDate, desc: 'Super Liability Accrued', debit: 0, credit: result.superAmount});
+            superAccrued += result.superAmount;
+            if ((currentStart.getMonth() + 1) % 3 === 0) {
+                accounts['Super Liability'].push({date: accrueDate, desc: 'Transfer to Super Fund', debit: superAccrued, credit: 0});
+                accounts['Bank Account'].push({date: accrueDate, desc: 'Super Contribution Transfer', debit: 0, credit: superAccrued});
+                superAccrued = 0;
+            }
+
+            accounts['HECS Liability'].push({date: accrueDate, desc: 'HECS Liability Accrued', debit: 0, credit: result.hecsAmount});
+            hecsAccrued += result.hecsAmount;
+
+            periods.push({start: new Date(currentStart), result});
+
+            currentStart.setMonth(currentStart.getMonth() + 1);
+        }
+
+        const yearEnd = new Date(endDate.getFullYear(), 5, 30); // 30 June
+        accounts['HECS Liability'].push({date: yearEnd, desc: 'Payment to ATO (HECS repayment)', debit: hecsAccrued, credit: 0});
+        accounts['Bank Account'].push({date: yearEnd, desc: 'HECS Payment', debit: 0, credit: hecsAccrued});
+
+        accounts['Income Tax Liability'].push({date: yearEnd, desc: 'Income Tax Accrued', debit: 0, credit: totals.taxAmount});
+        accounts['Income Tax Liability'].push({date: yearEnd, desc: 'Payment of Income Tax to ATO', debit: totals.taxAmount, credit: 0});
+        accounts['Bank Account'].push({date: yearEnd, desc: 'Income Tax Payment', debit: 0, credit: totals.taxAmount});
+
+        for (const [name, entries] of Object.entries(accounts)) {
+            let bal = 0;
+            const table = document.createElement('table');
+            table.className = 'account-table';
+            let html = `<thead><tr><th colspan="5">${name}</th></tr>` +
+                '<tr><th>Date</th><th>Description</th><th>Debit ($)</th><th>Credit ($)</th><th>Balance ($)</th></tr></thead><tbody>';
+            entries.sort((a,b)=>a.date-b.date).forEach(e=>{
+                bal += e.debit - e.credit;
+                html += `<tr><td>${e.date.toISOString().slice(0,10)}</td><td>${e.desc}</td>`+
+                    `<td>${e.debit?formatMoney(e.debit):''}</td>`+
+                    `<td>${e.credit?formatMoney(e.credit):''}</td>`+
+                    `<td>${formatMoney(bal)}</td></tr>`;
+            });
+            html += '</tbody>';
+            table.innerHTML = html;
+            ledgerAccountsDiv.appendChild(table);
+        }
 
         ledgerModal.hidden = false;
     }
