@@ -2,7 +2,7 @@
 
 This repository contains a suite of utilities for independent contractors. The first tool is the **Contractor Pay Estimator**, a simple web application that helps Australian contractors estimate how much of their invoiced income they should set aside for tax and GST.
 
-The tools are completely client side and are hosted using GitHub Pages from the [`docs/`](docs/) directory.
+The tools are completely client side and are hosted using GitHub Pages from the [`docs/`](docs/) directory. The primary calculator is now available at [`/takehome/`](https://contractortools.au/takehome/).
 It allows you to input your daily rate, select a date range and state, and it automatically calculates the working days in that period (excluding weekends and public holidays).
 GST is fixed at 10% with an optional **Collect GST** checkbox. Toggle it and adjust approximate tax rates to see how much money you might bank after setting aside tax.
 
