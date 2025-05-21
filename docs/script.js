@@ -404,10 +404,9 @@ class PayCalculator {
     if (riRow) riRow.style.display = "";
     if (riValue) riValue.textContent = "$" + formatMoney(total);
     if (riSuperNote) {
-      if (included > 0) {
-        riSuperNote.textContent = `Repayment income already includes $${formatMoney(
-          included,
-        )} from employer super`;
+      const displayAmount = included * (1 + superRate);
+      if (displayAmount > 0) {
+        riSuperNote.textContent = `Repayment income already includes $${formatMoney(displayAmount)} from employer super`;
         riSuperNote.hidden = false;
       } else {
         riSuperNote.textContent = "";
