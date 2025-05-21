@@ -110,13 +110,15 @@ class PayCalculator {
     const rateChangeDiv = document.getElementById('rateChange');
 
     let baseRate = 0;
+    let baseRateType = 'daily';
+    let baseHoursPerDay = 7.2;
     let currentRate = 0;
     let baseWorkingDays = 0;
     let otherRates = {};
 
-    function convertRate(value, from, to) {
+    function convertRate(value, from, to, hours) {
         if (isNaN(value)) return 0;
-        const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
+        const hoursPerDay = hours !== undefined ? hours : (parseFloat(hoursPerDayInput.value) || 7.2);
         const hoursPerWeek = hoursPerDay * 5;
         let hourly;
         switch (from) {
@@ -170,7 +172,8 @@ class PayCalculator {
     function updateRateChangeUI() {
         if (!rateChangeDiv) return;
         currentRateSpan.textContent = '$' + formatMoney(currentRate);
-        const calc = new PayCalculator(currentRate, otherRates.gstRate, otherRates.taxRate, otherRates.superRate, otherRates.hecsRate);
+        const daily = convertRate(currentRate, baseRateType, 'daily', baseHoursPerDay);
+        const calc = new PayCalculator(daily, otherRates.gstRate, otherRates.taxRate, otherRates.superRate, otherRates.hecsRate);
         const { netAmount } = calc.calculate(baseWorkingDays);
         changedNetSpan.textContent = '$' + formatMoney(netAmount);
         const pct = baseRate ? ((currentRate - baseRate) / baseRate) * 100 : 0;
@@ -255,8 +258,10 @@ class PayCalculator {
 
         resultsDiv.hidden = false;
 
-        baseRate = dailyRate;
-        currentRate = dailyRate;
+        baseRate = rate;
+        baseRateType = rateTypeSelect.value;
+        baseHoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
+        currentRate = baseRate;
         baseWorkingDays = workingDays;
         otherRates = { gstRate, taxRate, superRate, hecsRate };
         updateRateChangeUI();
