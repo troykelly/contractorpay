@@ -12,6 +12,8 @@ class HolidayService {
         }
     };
 
+    static cache = {};
+
     static async fetchHolidays(year, state) {
         const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
         if (!response.ok) throw new Error('Network response was not ok');
@@ -22,11 +24,16 @@ class HolidayService {
     }
 
     static async getHolidays(year, state) {
+        const key = `${year}_${state}`;
+        if (this.cache[key]) return this.cache[key];
         try {
-            return await this.fetchHolidays(year, state);
+            const holidays = await this.fetchHolidays(year, state);
+            this.cache[key] = holidays;
+            return holidays;
         } catch (e) {
             const fallback = (this.FALLBACK_HOLIDAYS[year] || {})[state];
-            return fallback || [];
+            this.cache[key] = fallback || [];
+            return this.cache[key];
         }
     }
 }
@@ -53,6 +60,9 @@ class PayCalculator {
 
     static async countWorkingDays(startDate, endDate, state) {
         if (!(startDate instanceof Date) || !(endDate instanceof Date)) return 0;
+        const key = `${startDate.toISOString()}_${endDate.toISOString()}_${state}`;
+        if (!this._cache) this._cache = {};
+        if (this._cache[key] !== undefined) return this._cache[key];
         const years = new Set();
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
             years.add(d.getFullYear());
@@ -69,6 +79,7 @@ class PayCalculator {
                 count++;
             }
         }
+        this._cache[key] = count;
         return count;
     }
 }
@@ -78,11 +89,67 @@ class PayCalculator {
         return value.toFixed(2);
     }
 
-    const calculateBtn = document.getElementById('calculate');
     const resultsDiv = document.getElementById('results');
+    const rateInput = document.getElementById('rate');
+    const rateTypeSelect = document.getElementById('rateType');
+    const hoursPerDayInput = document.getElementById('hoursPerDay');
+    const holidayInput = document.getElementById('holidayDays');
+    const furloughContainer = document.getElementById('furloughContainer');
+    let prevRateType = rateTypeSelect.value;
 
-    calculateBtn.addEventListener('click', async function() {
-        const dailyRate = parseFloat(document.getElementById('dailyRate').value) || 0;
+    function convertRate(value, from, to) {
+        if (isNaN(value)) return 0;
+        const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
+        const hoursPerWeek = hoursPerDay * 5;
+        let hourly;
+        switch (from) {
+            case 'hourly': hourly = value; break;
+            case 'daily': hourly = value / hoursPerDay; break;
+            case 'weekly': hourly = value / hoursPerWeek; break;
+        }
+        switch (to) {
+            case 'hourly': return hourly;
+            case 'daily': return hourly * hoursPerDay;
+            case 'weekly': return hourly * hoursPerWeek;
+        }
+        return value;
+    }
+
+    function addFurloughRow() {
+        const div = document.createElement('div');
+        div.className = 'furlough-period';
+        div.innerHTML = `<input type="date" class="furlough-start"><input type="date" class="furlough-end"><button type="button" class="remove-furlough">Remove</button>`;
+        furloughContainer.insertBefore(div, document.getElementById('addFurlough'));
+    }
+
+    furloughContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-furlough')) {
+            e.target.parentElement.remove();
+            calculate();
+        }
+    });
+    document.getElementById('addFurlough').addEventListener('click', function() {
+        addFurloughRow();
+    });
+
+    rateTypeSelect.addEventListener('change', function() {
+        const val = parseFloat(rateInput.value) || 0;
+        const newVal = convertRate(val, prevRateType, rateTypeSelect.value);
+        rateInput.value = newVal.toFixed(2);
+        prevRateType = rateTypeSelect.value;
+        calculate();
+    });
+
+    function attachAutoCalc(id) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', calculate);
+    }
+
+    ['rate','gstRate','taxRate','startDate','endDate','state','holidayDays','hoursPerDay'].forEach(attachAutoCalc);
+
+    async function calculate() {
+        const rate = parseFloat(rateInput.value) || 0;
+        const dailyRate = convertRate(rate, rateTypeSelect.value, 'daily');
         const gstRate = parseFloat(document.getElementById('gstRate').value) / 100 || 0;
         const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0;
         const startDateVal = document.getElementById('startDate').value;
@@ -93,7 +160,23 @@ class PayCalculator {
             const startDate = new Date(startDateVal);
             const endDate = new Date(endDateVal);
             workingDays = await PayCalculator.countWorkingDays(startDate, endDate, state);
+
+            const holidayDays = parseInt(holidayInput.value) || 0;
+            workingDays -= holidayDays;
+
+            const periods = furloughContainer.querySelectorAll('.furlough-period');
+            for (const p of periods) {
+                const fs = p.querySelector('.furlough-start').value;
+                const fe = p.querySelector('.furlough-end').value;
+                if (fs && fe) {
+                    const start = new Date(fs);
+                    const end = new Date(fe);
+                    const days = await PayCalculator.countWorkingDays(start, end, state);
+                    workingDays -= days;
+                }
+            }
         }
+        if (workingDays < 0) workingDays = 0;
         document.getElementById('workingDays').value = workingDays;
 
         const calc = new PayCalculator(dailyRate, gstRate, taxRate);
@@ -105,5 +188,8 @@ class PayCalculator {
         document.getElementById('netAmount').textContent = formatMoney(netAmount);
 
         resultsDiv.hidden = false;
-    });
+    }
+
+    document.getElementById('calculate').addEventListener('click', calculate);
+    calculate();
 })();
