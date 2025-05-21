@@ -73,6 +73,14 @@
             <input type="number" id="taxRate" value="30">
             <small class="note">Approximate rate to set aside for tax.</small>
         </div>
+        <div class="form-group">
+            <label for="superRate">Super Rate (%)</label>
+            <input type="number" id="superRate" value="11">
+        </div>
+        <div class="form-group">
+            <label for="hecsRate">HECS Rate (%)</label>
+            <input type="number" id="hecsRate" value="0">
+        </div>
 
         <div class="form-group">
             <label for="hoursPerDay">Working Hours Per Day</label>
@@ -80,12 +88,17 @@
         </div>
 
         <button id="calculate">Calculate</button>
+        <div id="error" class="error" hidden></div>
 
         <div class="results" id="results" hidden>
             <h2>Results</h2>
             <p>Total income (ex GST): $<span id="incomeExGst"></span></p>
             <p>GST to set aside: $<span id="gstAmount"></span></p>
             <p>Estimated tax to set aside: $<span id="taxAmount"></span></p>
+            <p>Super to set aside: $<span id="superAmount"></span></p>
+            <p>HECS to set aside: $<span id="hecsAmount"></span></p>
+            <p>Total furlough days: <span id="totalFurloughDays"></span></p>
+            <p>Total hours worked: <span id="totalHours"></span></p>
             <p class="total">Approximate amount to bank: $<span id="netAmount"></span></p>
         </div>
     </div>
