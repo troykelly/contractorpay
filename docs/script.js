@@ -257,7 +257,11 @@ class PayCalculator {
   const ledgerAccountsDiv = document.getElementById("ledgerAccounts");
   const closeLedgerFooterBtn = document.getElementById("closeLedgerFooter");
   const copyLedgerBtn = document.getElementById("copyLedger");
+  const hecsInfoModal = document.getElementById("hecsInfoModal");
+  const hecsInfoBtn = document.getElementById("openHecsInfo");
+  const closeHecsInfoBtn = document.getElementById("closeHecsInfo");
   if (ledgerModal) ledgerModal.hidden = true;
+  if (hecsInfoModal) hecsInfoModal.hidden = true;
   let prevRateType = rateTypeSelect.value;
 
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
@@ -1078,6 +1082,17 @@ class PayCalculator {
   if (ledgerModal)
     ledgerModal.addEventListener("click", function (e) {
       if (e.target === ledgerModal) ledgerModal.hidden = true;
+    });
+  if (hecsInfoBtn)
+    hecsInfoBtn.addEventListener("click", () => (hecsInfoModal.hidden = false));
+  if (closeHecsInfoBtn)
+    closeHecsInfoBtn.addEventListener(
+      "click",
+      () => (hecsInfoModal.hidden = true),
+    );
+  if (hecsInfoModal)
+    hecsInfoModal.addEventListener("click", function (e) {
+      if (e.target === hecsInfoModal) hecsInfoModal.hidden = true;
     });
   if (rateChangeDiv) {
     rateChangeDiv.addEventListener("click", function (e) {
