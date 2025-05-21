@@ -699,7 +699,6 @@ class PayCalculator {
     document.getElementById("netAmount").textContent =
       "$" + formatMoney(netAmount);
     document.getElementById("totalFurloughDays").textContent = furloughDays;
-    const hoursPerDay = parseFloat(hoursPerDayInput.value) || 7.2;
     document.getElementById("totalHours").textContent = formatMoney(
       workingDays * hoursPerDay,
     );
