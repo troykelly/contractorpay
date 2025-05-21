@@ -115,6 +115,8 @@ class PayCalculator {
     const ledgerSuper = document.getElementById('ledgerSuper');
     const ledgerHecs = document.getElementById('ledgerHecs');
     const ledgerNet = document.getElementById('ledgerNet');
+    const closeLedgerFooterBtn = document.getElementById('closeLedgerFooter');
+    if (ledgerModal) ledgerModal.hidden = true;
     let prevRateType = rateTypeSelect.value;
 
     const currentRateSpan = document.getElementById('currentRate');
@@ -466,6 +468,7 @@ class PayCalculator {
     if (ledgerBtn) ledgerBtn.addEventListener('click', createLedger);
     const closeLedgerBtn = document.getElementById('closeLedger');
     if (closeLedgerBtn) closeLedgerBtn.addEventListener('click', () => ledgerModal.hidden = true);
+    if (closeLedgerFooterBtn) closeLedgerFooterBtn.addEventListener('click', () => ledgerModal.hidden = true);
     if (ledgerModal) ledgerModal.addEventListener('click', function(e){ if(e.target === ledgerModal) ledgerModal.hidden = true; });
     if (rateChangeDiv) {
         rateChangeDiv.addEventListener('click', function(e) {
