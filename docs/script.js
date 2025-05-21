@@ -193,6 +193,37 @@ class PayCalculator {
         rateChangePercentSpan.textContent = pct.toFixed(1);
     }
 
+    function generateExplanation(data) {
+        const expEl = document.getElementById('resultExplanation');
+        if (!expEl) return;
+        const parts = [];
+        parts.push(
+            `The total on your invoice is $${formatMoney(data.incomeIncGst)}. This is the amount you ask your client to pay.`
+        );
+        if (data.gstAmount > 0) {
+            parts.push(
+                `Of this total, $${formatMoney(data.gstAmount)} is Goods and Services Tax (GST). GST is collected for the tax office and is not yours to keep.`
+            );
+        }
+        parts.push(
+            `The remaining amount before tax is your actual earnings. You should set aside roughly $${formatMoney(data.taxAmount)} for income tax.`
+        );
+        if (data.superAmount > 0) {
+            parts.push(
+                `You also need to put $${formatMoney(data.superAmount)} into your superannuation account. Super is money saved for retirement and isn't part of your take-home pay.`
+            );
+        }
+        if (data.hecsAmount > 0) {
+            parts.push(
+                `If you have a HECS or HELP debt, keep about $${formatMoney(data.hecsAmount)} aside to pay it. This comes out after tax because it is a personal loan, similar to any other loan you might repay.`
+            );
+        }
+        parts.push(
+            `After putting aside these amounts you will have around $${formatMoney(data.netAmount)} left. This is effectively your take‑home salary for day‑to‑day spending.`
+        );
+        expEl.innerHTML = '<p>' + parts.join('</p><p>') + '</p>';
+    }
+
     function adjustRate(delta) {
         currentRate += delta;
         updateRateChangeUI();
@@ -291,6 +322,14 @@ class PayCalculator {
         baseWorkingDays = workingDays;
         otherRates = { collectGst: gstRate > 0, taxRate, superRate, hecsRate };
         updateRateChangeUI();
+        generateExplanation({
+            incomeIncGst,
+            gstAmount,
+            taxAmount,
+            superAmount,
+            hecsAmount,
+            netAmount
+        });
     }
 
     function collectFormData() {
